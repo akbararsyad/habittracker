@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Catatan Ibadah Harianku</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --green:#2d6a4f;
+  --green2:#40916c;
+  --green3:#74c69d;
+  --green4:#d8f3dc;
+  --gold:#b7934c;
+  --gold2:#e9c46a;
+  --cream:#fefae0;
+  --cream2:#f5f0d8;
+  --brown:#5c4a1e;
+  --text:#1a2e1a;
+  --text2:#4a6741;
+  --text3:#7a9e7e;
+  --bg:#f7f3e3;
+  --white:#ffffff;
+  --border:rgba(45,106,79,0.15);
+  --border2:rgba(45,106,79,0.3);
+  --radius:12px;
+  --radius-lg:18px;
+  --shadow:0 2px 16px rgba(45,106,79,0.08);
+}
+
+body{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(116,198,157,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(183,147,76,0.08) 0%, transparent 50%);
+}
+
+.header{
+  background:var(--green);
+  padding:1.5rem 1rem 4rem;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.header::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.header-inner{position:relative;z-index:1;}
+.header h1{
+  font-family:'Amiri',serif;
+  font-size:28px;
+  color:#fff;
+  margin-bottom:4px;
+  letter-spacing:0.5px;
+}
+.header-arabic{
+  font-family:'Amiri',serif;
+  font-size:22px;
+  color:rgba(255,255,255,0.7);
+  margin-bottom:8px;
+  direction:rtl;
+}
+.header-date{
+  font-size:13px;
+  color:rgba(255,255,255,0.6);
+}
+
+.nav-card{
+  max-width:680px;
+  margin:-2.5rem auto 0;
+  padding:0 1rem;
+  position:relative;
+  z-index:10;
+}
+
+.tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  background:var(--white);
+  border-radius:var(--radius-lg);
+  padding:8px;
+  box-shadow:var(--shadow);
+  border:0.5px solid var(--border);
+}
+
+.tab{
+  padding:10px 8px;
+  border:none;
+  background:none;
+  border-radius:10px;
+  cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:13px;
+  font-weight:500;
+  color:var(--text2);
+  transition:all 0.2s;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+.tab-icon{font-size:20px;}
+.tab.active{background:var(--green);color:#fff;}
+.tab:not(.active):hover{background:var(--green4);}
+
+.container{
+  max-width:680px;
+  margin:1.5rem auto;
+  padding:0 1rem 3rem;
+}
+
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* DATE NAV */
+.date-nav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:var(--white);
+  border-radius:var(--radius);
+  padding:12px 16px;
+  margin-bottom:1rem;
+  border:0.5px solid var(--border);
+  box-shadow:var(--shadow);
+}
+.date-nav-btn{
+  background:none;
+  border:0.5px solid var(--border2);
+  border-radius:8px;
+  padding:6px 14px;
+  cursor:pointer;
+  font-size:14px;
+  color:var(--text2);
+  font-family:inherit;
+}
+.date-nav-btn:hover{background:var(--green4);}
+.date-label{font-size:15px;font-weight:600;color:var(--text);}
+
+/* SHALAT CARD */
+.section-card{
+  background:var(--white);
+  border-radius:var(--radius-lg);
+  border:0.5px solid var(--border);
+  box-shadow:var(--shadow);
+  margin-bottom:1rem;
+  overflow:hidden;
+}
+.section-head{
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border-bottom:0.5px solid var(--border);
+}
+.section-icon{font-size:20px;}
+.section-title{font-size:15px;font-weight:600;color:var(--text);}
+.section-sub{font-size:12px;color:var(--text3);margin-left:auto;}
+
+.shalat-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:8px;
+  padding:12px;
+}
+
+.shalat-item{
+  border:0.5px solid var(--border2);
+  border-radius:10px;
+  padding:10px 12px;
+  cursor:pointer;
+  transition:all 0.15s;
+  user-select:none;
+}
+.shalat-item:hover{background:var(--green4);}
+.shalat-item.checked{
+  background:var(--green);
+  border-color:var(--green);
+  color:#fff;
+}
+.shalat-name{font-size:13px;font-weight:600;display:block;margin-bottom:2px;}
+.shalat-rakaat{font-size:11px;opacity:0.7;}
+.shalat-check{float:right;font-size:16px;margin-top:-2px;}
+
+.wajib-label{
+  font-size:11px;
+  font-weight:600;
+  color:var(--text3);
+  padding:8px 12px 4px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+
+/* PROGRESS BAR */
+.progress-wrap{padding:12px 16px;border-top:0.5px solid var(--border);}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px;}
+.progress-bar{height:8px;background:var(--green4);border-radius:99px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--green2);border-radius:99px;transition:width 0.4s;}
+
+/* TILAWAH */
+.tilawah-form{padding:16px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;}
+input[type=text],input[type=number],select,textarea{
+  padding:9px 12px;
+  border:0.5px solid var(--border2);
+  border-radius:8px;
+  background:var(--bg);
+  color:var(--text);
+  font-size:14px;
+  font-family:inherit;
+  outline:none;
+  width:100%;
+  transition:border 0.15s;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--green2);}
+textarea{height:70px;resize:vertical;}
+
+.save-btn{
+  width:100%;
+  padding:12px;
+  background:var(--green);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  font-size:15px;
+  font-weight:600;
+  font-family:inherit;
+  cursor:pointer;
+  transition:background 0.15s;
+  margin-top:4px;
+}
+.save-btn:hover{background:var(--green2);}
+.save-btn:active{transform:scale(0.99);}
+
+/* LOG LIST */
+.log-list{display:flex;flex-direction:column;gap:10px;}
+.log-card{
+  background:var(--white);
+  border-radius:var(--radius);
+  border:0.5px solid var(--border);
+  padding:14px 16px;
+  box-shadow:var(--shadow);
+}
+.log-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.log-date{font-size:12px;color:var(--text3);}
+.log-surat{font-size:15px;font-weight:600;color:var(--text);}
+.log-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.log-badge{
+  font-size:11px;
+  background:var(--green4);
+  color:var(--green);
+  padding:3px 10px;
+  border-radius:99px;
+  font-weight:600;
+}
+.log-badge.gold{background:#fdf3d0;color:var(--gold);}
+.log-note{font-size:13px;color:var(--text2);margin-top:8px;font-style:italic;line-height:1.5;}
+.del-log{background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:2px 6px;border-radius:4px;}
+.del-log:hover{color:#c0392b;background:#fdecea;}
+
+/* REKAP */
+.rekap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;}
+.rekap-card{
+  background:var(--white);
+  border-radius:var(--radius);
+  border:0.5px solid var(--border);
+  padding:14px;
+  text-align:center;
+  box-shadow:var(--shadow);
+}
+.rekap-num{font-size:28px;font-weight:600;color:var(--green);}
+.rekap-lbl{font-size:11px;color:var(--text3);margin-top:2px;}
+
+.month-nav{
+  display:flex;align-items:center;gap:10px;
+  background:var(--white);border-radius:var(--radius);
+  padding:10px 16px;margin-bottom:1rem;
+  border:0.5px solid var(--border);box-shadow:var(--shadow);
+}
+.month-lbl{flex:1;text-align:center;font-size:15px;font-weight:600;}
+
+.shalat-rekap-row{
+  background:var(--white);border-radius:var(--radius);
+  border:0.5px solid var(--border);padding:14px 16px;
+  margin-bottom:8px;box-shadow:var(--shadow);
+}
+.shalat-rekap-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.shalat-rekap-bar{height:6px;background:var(--green4);border-radius:99px;overflow:hidden;margin-bottom:4px;}
+.shalat-rekap-fill{height:100%;background:var(--green2);border-radius:99px;}
+.shalat-rekap-meta{font-size:12px;color:var(--text3);}
+
+.empty-state{
+  text-align:center;padding:2.5rem 1rem;
+  color:var(--text3);font-size:14px;
+  border:0.5px dashed var(--border2);
+  border-radius:var(--radius-lg);background:var(--white);
+}
+.empty-icon{font-size:36px;display:block;margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-arabic">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم</div>
+    <h1>Catatan Ibadah Harianku</h1>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+</div>
+
+<div class="nav-card">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('shalat')">
+      <span class="tab-icon">🕌</span> Shalat
+    </button>
+    <button class="tab" onclick="switchTab('tilawah')">
+      <span class="tab-icon">📖</span> Tilawah
+    </button>
+    <button class="tab" onclick="switchTab('rekap')">
+      <span class="tab-icon">📊</span> Rekap
+    </button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- TAB SHALAT -->
+  <div id="tab-shalat" class="tab-content active">
+    <div class="date-nav">
+      <button class="date-nav-btn" onclick="changeDay(-1)">‹ Kemarin</button>
+      <span class="date-label" id="shalatDateLabel"></span>
+      <button class="date-nav-btn" onclick="changeDay(1)">Besok ›</button>
+    </div>
+
+    <div class="section-card">
+      <div class="section-head">
+        <span class="section-icon">🕌</span>
+        <span class="section-title">Shalat Wajib</span>
+        <span class="section-sub" id="wajibCount">0/5</span>
+      </div>
+      <div class="shalat-grid" id="wajibGrid"></div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progress Wajib</span><span id="wajibPct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="wajibBar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-head">
+        <span class="section-icon">✨</span>
+        <span class="section-title">Shalat Sunnah</span>
+        <span class="section-sub" id="sunnahCount">0/9</span>
+      </div>
+      <div class="shalat-grid" id="sunnahGrid"></div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progress Sunnah</span><span id="sunnahPct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="sunnahBar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB TILAWAH -->
+  <div id="tab-tilawah" class="tab-content">
+    <div class="section-card" style="margin-bottom:1rem">
+      <div class="section-head">
+        <span class="section-icon">📝</span>
+        <span class="section-title">Tambah Catatan Tilawah</span>
+      </div>
+      <div class="tilawah-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tanggal</label>
+            <input type="text" id="tilDate" readonly />
+          </div>
+          <div class="form-group">
+            <label>Juz</label>
+            <select id="tilJuz">
+              <option value="">Pilih Juz</option>
+              ${Array.from({length:30},(_,i)=>`<option value="${i+1}">Juz ${i+1}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nama Surat</label>
+            <input type="text" id="tilSurat" placeholder="cth: Al-Baqarah" />
+          </div>
+          <div class="form-group">
+            <label>Ayat</label>
+            <input type="text" id="tilAyat" placeholder="cth: 1-20" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Halaman Mulai</label>
+            <input type="number" id="tilHalMulai" min="1" max="604" placeholder="1" />
+          </div>
+          <div class="form-group">
+            <label>Halaman Selesai</label>
+            <input type="number" id="tilHalSelesai" min="1" max="604" placeholder="604" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Jumlah Lembar</label>
+            <input type="number" id="tilLembar" min="1" placeholder="cth: 4" />
+          </div>
+          <div class="form-group">
+            <label>Durasi (menit)</label>
+            <input type="number" id="tilDurasi" min="1" placeholder="cth: 30" />
+          </div>
+        </div>
+        <div class="form-group full" style="margin-bottom:10px">
+          <label>Catatan</label>
+          <textarea id="tilCatatan" placeholder="Refleksi, ayat favorit, dll..."></textarea>
+        </div>
+        <button class="save-btn" onclick="saveTilawah()">💾 Simpan Catatan Tilawah</button>
+      </div>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px;padding:0 4px">
+      Riwayat Tilawah
+    </div>
+    <div id="tilawahList"></div>
+  </div>
+
+  <!-- TAB REKAP -->
+  <div id="tab-rekap" class="tab-content">
+    <div class="month-nav">
+      <button class="date-nav-btn" onclick="changeRekapMonth(-1)">‹</button>
+      <span class="month-lbl" id="rekapMonthLabel"></span>
+      <button class="date-nav-btn" onclick="changeRekapMonth(1)">›</button>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px;padding:0 4px">Tilawah Bulan Ini</div>
+    <div class="rekap-grid" id="rekapTilawah"></div>
+
+    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px;padding:0 4px">Shalat Wajib Bulan Ini</div>
+    <div id="rekapShalat"></div>
+  </div>
+
+</div>
+
+<script>
+const WAJIB = [
+  {id:'subuh',name:'Subuh',rakaat:'2 rakaat'},
+  {id:'dzuhur',name:'Dzuhur',rakaat:'4 rakaat'},
+  {id:'ashar',name:'Ashar',rakaat:'4 rakaat'},
+  {id:'maghrib',name:'Maghrib',rakaat:'3 rakaat'},
+  {id:'isya',name:'Isya',rakaat:'4 rakaat'},
+];
+
+const SUNNAH = [
+  {id:'rawatib_subuh',name:'Qabliyah Subuh',rakaat:'2 rakaat'},
+  {id:'rawatib_dzuhur_q',name:'Qabliyah Dzuhur',rakaat:'2 rakaat'},
+  {id:'rawatib_dzuhur_b',name:'Ba\'diyah Dzuhur',rakaat:'2 rakaat'},
+  {id:'rawatib_ashar',name:'Qabliyah Ashar',rakaat:'2 rakaat'},
+  {id:'rawatib_maghrib',name:'Ba\'diyah Maghrib',rakaat:'2 rakaat'},
+  {id:'rawatib_isya',name:'Ba\'diyah Isya',rakaat:'2 rakaat'},
+  {id:'dhuha',name:'Dhuha',rakaat:'2-12 rakaat'},
+  {id:'tahajud',name:'Tahajud',rakaat:'2-8 rakaat'},
+  {id:'witir',name:'Witir',rakaat:'1-11 rakaat'},
+];
+
+const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+let viewDate = new Date();
+viewDate.setHours(0,0,0,0);
+
+let rekapDate = new Date();
+
+let data = {shalat:{}, tilawah:[]};
+try {
+  const s = JSON.parse(localStorage.getItem('ibadahTracker') || '{}');
+  if(s.shalat) data = s;
+} catch(e){}
+
+function save(){
+  try{localStorage.setItem('ibadahTracker',JSON.stringify(data));}catch(e){}
+}
+
+function dateKey(d){ return `${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`; }
+
+function formatDate(d){
+  const days=['Ahad','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  return `${days[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function updateHeaderDate(){
+  const n=new Date();
+  document.getElementById('headerDate').textContent=formatDate(n);
+}
+
+function changeDay(dir){
+  viewDate.setDate(viewDate.getDate()+dir);
+  renderShalat();
+}
+
+function changeRekapMonth(dir){
+  rekapDate.setMonth(rekapDate.getMonth()+dir);
+  renderRekap();
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const idx=['shalat','tilawah','rekap'].indexOf(name);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  if(name==='rekap') renderRekap();
+  if(name==='tilawah') renderTilawah();
+}
+
+function toggleShalat(id){
+  const k=dateKey(viewDate);
+  if(!data.shalat[k]) data.shalat[k]={};
+  data.shalat[k][id]=!data.shalat[k][id];
+  save();
+  renderShalat();
+}
+
+function renderShalat(){
+  const k=dateKey(viewDate);
+  const log=data.shalat[k]||{};
+  document.getElementById('shalatDateLabel').textContent=formatDate(viewDate);
+
+  // wajib
+  let wajibDone=0;
+  document.getElementById('wajibGrid').innerHTML=WAJIB.map(s=>{
+    const checked=!!log[s.id];
+    if(checked) wajibDone++;
+    return `<div class="shalat-item${checked?' checked':''}" onclick="toggleShalat('${s.id}')">
+      <span class="shalat-check">${checked?'✓':'○'}</span>
+      <span class="shalat-name">${s.name}</span>
+      <span class="shalat-rakaat">${s.rakaat}</span>
+    </div>`;
+  }).join('');
+  const wp=Math.round((wajibDone/WAJIB.length)*100);
+  document.getElementById('wajibCount').textContent=`${wajibDone}/${WAJIB.length}`;
+  document.getElementById('wajibPct').textContent=wp+'%';
+  document.getElementById('wajibBar').style.width=wp+'%';
+
+  // sunnah
+  let sunnahDone=0;
+  document.getElementById('sunnahGrid').innerHTML=SUNNAH.map(s=>{
+    const checked=!!log[s.id];
+    if(checked) sunnahDone++;
+    return `<div class="shalat-item${checked?' checked':''}" onclick="toggleShalat('${s.id}')">
+      <span class="shalat-check">${checked?'✓':'○'}</span>
+      <span class="shalat-name">${s.name}</span>
+      <span class="shalat-rakaat">${s.rakaat}</span>
+    </div>`;
+  }).join('');
+  const sp=Math.round((sunnahDone/SUNNAH.length)*100);
+  document.getElementById('sunnahCount').textContent=`${sunnahDone}/${SUNNAH.length}`;
+  document.getElementById('sunnahPct').textContent=sp+'%';
+  document.getElementById('sunnahBar').style.width=sp+'%';
+}
+
+function saveTilawah(){
+  const surat=document.getElementById('tilSurat').value.trim();
+  const juz=document.getElementById('tilJuz').value;
+  const ayat=document.getElementById('tilAyat').value.trim();
+  const halMulai=document.getElementById('tilHalMulai').value;
+  const halSelesai=document.getElementById('tilHalSelesai').value;
+  const lembar=document.getElementById('tilLembar').value;
+  const durasi=document.getElementById('tilDurasi').value;
+  const catatan=document.getElementById('tilCatatan').value.trim();
+
+  if(!surat && !juz){alert('Isi minimal nama surat atau juz ya!');return;}
+
+  const entry={
+    id:Date.now(),
+    date:new Date().toISOString().split('T')[0],
+    dateLabel:formatDate(new Date()),
+    surat, juz, ayat, halMulai, halSelesai,
+    lembar:lembar?parseInt(lembar):null,
+    durasi:durasi?parseInt(durasi):null,
+    catatan,
+  };
+
+  data.tilawah.unshift(entry);
+  save();
+
+  // reset form
+  ['tilSurat','tilAyat','tilHalMulai','tilHalSelesai','tilLembar','tilDurasi','tilCatatan'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('tilJuz').value='';
+  renderTilawah();
+}
+
+function deleteTilawah(id){
+  if(!confirm('Hapus catatan ini?')) return;
+  data.tilawah=data.tilawah.filter(t=>t.id!==id);
+  save();
+  renderTilawah();
+}
+
+function renderTilawah(){
+  const el=document.getElementById('tilawahList');
+  if(data.tilawah.length===0){
+    el.innerHTML=`<div class="empty-state"><span class="empty-icon">📖</span>Belum ada catatan tilawah.<br>Yuk mulai isi di form di atas!</div>`;
+    return;
+  }
+  el.innerHTML=`<div class="log-list">${data.tilawah.map(t=>`
+    <div class="log-card">
+      <div class="log-header">
+        <div>
+          <div class="log-surat">${t.surat||'—'} ${t.ayat?`(${t.ayat})`:''}</div>
+          <div class="log-date">${t.dateLabel}</div>
+        </div>
+        <button class="del-log" onclick="deleteTilawah(${t.id})">🗑</button>
+      </div>
+      <div class="log-meta">
+        ${t.juz?`<span class="log-badge">Juz ${t.juz}</span>`:''}
+        ${t.halMulai&&t.halSelesai?`<span class="log-badge">Hal ${t.halMulai}–${t.halSelesai}</span>`:''}
+        ${t.lembar?`<span class="log-badge gold">${t.lembar} lembar</span>`:''}
+        ${t.durasi?`<span class="log-badge">${t.durasi} menit</span>`:''}
+      </div>
+      ${t.catatan?`<div class="log-note">"${t.catatan}"</div>`:''}
+    </div>
+  `).join('')}</div>`;
+}
+
+function renderRekap(){
+  const y=rekapDate.getFullYear();
+  const m=rekapDate.getMonth();
+  document.getElementById('rekapMonthLabel').textContent=`${MONTHS[m]} ${y}`;
+
+  const daysInMonth=new Date(y,m+1,0).getDate();
+
+  // Tilawah rekap
+  const monthTilawah=data.tilawah.filter(t=>{
+    const d=new Date(t.date);
+    return d.getFullYear()===y && d.getMonth()===m;
+  });
+  const totalLembar=monthTilawah.reduce((s,t)=>s+(t.lembar||0),0);
+  const totalDurasi=monthTilawah.reduce((s,t)=>s+(t.durasi||0),0);
+  const hariTilawah=new Set(monthTilawah.map(t=>t.date)).size;
+
+  document.getElementById('rekapTilawah').innerHTML=`
+    <div class="rekap-card"><div class="rekap-num">${hariTilawah}</div><div class="rekap-lbl">Hari tilawah</div></div>
+    <div class="rekap-card"><div class="rekap-num">${totalLembar}</div><div class="rekap-lbl">Total lembar</div></div>
+    <div class="rekap-card"><div class="rekap-num">${totalDurasi}</div><div class="rekap-lbl">Total menit</div></div>
+  `;
+
+  // Shalat rekap
+  const shalatEl=document.getElementById('rekapShalat');
+  const shalatStats={};
+  WAJIB.forEach(s=>shalatStats[s.id]={name:s.name,done:0});
+
+  for(let d=1;d<=daysInMonth;d++){
+    const k=`${y}_${m}_${d}`;
+    const log=data.shalat[k]||{};
+    WAJIB.forEach(s=>{if(log[s.id]) shalatStats[s.id].done++;});
+  }
+
+  shalatEl.innerHTML=WAJIB.map(s=>{
+    const st=shalatStats[s.id];
+    const pct=Math.round((st.done/daysInMonth)*100);
+    return `<div class="shalat-rekap-row">
+      <div class="shalat-rekap-name">${st.name}</div>
+      <div class="shalat-rekap-bar"><div class="shalat-rekap-fill" style="width:${pct}%"></div></div>
+      <div class="shalat-rekap-meta">${st.done}/${daysInMonth} hari · ${pct}%</div>
+    </div>`;
+  }).join('');
+}
+
+// Set tanggal hari ini di form tilawah
+function setTilDate(){
+  document.getElementById('tilDate').value=formatDate(new Date());
+}
+
+updateHeaderDate();
+setTilDate();
+renderShalat();
+renderTilawah();
+</script>
+</body>
+</html>
