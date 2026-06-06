@@ -745,17 +745,46 @@ function exportPDF(){
   statBox('Total lembar',totalLembar,M+94,88,[253,243,208]);
   y+=20;
   if(tilList.length>0){
+    // Header tabel
+    doc.setFillColor(235,248,240);
+    doc.rect(M,y,182,7,'F');
     doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(45,106,79);
-    doc.text('Riwayat:',M,y);y+=5;
-    doc.setFont('helvetica','normal');doc.setTextColor(60);
-    tilList.slice(0,15).forEach(t=>{
+    doc.text('Tanggal',M+2,y+5);
+    doc.text('Bacaan',M+48,y+5);
+    doc.text('Halaman',M+128,y+5);
+    doc.text('Lembar',M+158,y+5);
+    y+=9;
+
+    tilList.slice(0,15).forEach((t,i)=>{
       checkPage();
-      const range=t.suratMulaiNama&&t.suratSelesaiNama
-        ?`${t.suratMulaiNama}${t.ayatMulai?' ('+t.ayatMulai+')':''} → ${t.suratSelesaiNama}${t.ayatSelesai?' ('+t.ayatSelesai+')':''}`
-        :t.suratMulaiNama||'Tilawah';
-      const line=`  • ${t.dateLabel.replace(/^Hari ini, |^Kemarin, |^Besok, /,'')} : ${range} — Hal ${t.halMulai||'?'}–${t.halSelesai||'?'} (${t.lembar||0} lembar)`;
-      const lines=doc.splitTextToSize(line,175);
-      doc.text(lines,M,y);y+=lines.length*5;
+      // Baris zebra
+      if(i%2===0){doc.setFillColor(248,252,249);doc.rect(M,y-1,182,8,'F');}
+      doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(50);
+
+      // Bersihkan apostrof & karakter khusus
+      const cleanStr = (s) => (s||'').replace(/['’‘]/g,'').replace(/!/g,'').trim();
+
+      // Tanggal — ambil bagian tanggal saja tanpa hari
+      const rawDate = t.dateLabel.replace(/^Hari ini, |^Kemarin, |^Besok, /,'');
+      const dateParts = rawDate.split(', ');
+      const dateShort = dateParts.length>1 ? dateParts[1] : rawDate;
+
+      // Bacaan
+      const mulai = t.suratMulaiNama ? cleanStr(t.suratMulaiNama)+(t.ayatMulai?' '+t.ayatMulai:'') : '-';
+      const selesai = t.suratSelesaiNama ? cleanStr(t.suratSelesaiNama)+(t.ayatSelesai?' '+t.ayatSelesai:'') : '';
+      const bacaan = selesai ? mulai+' - '+selesai : mulai;
+
+      // Kolom
+      doc.text(dateShort, M+2, y+5, {maxWidth:44});
+      doc.text(bacaan, M+48, y+5, {maxWidth:76});
+      const hal = (t.halMulai&&t.halSelesai) ? t.halMulai+'-'+t.halSelesai : '-';
+      doc.text(hal, M+128, y+5, {maxWidth:26});
+      doc.text((t.lembar||0)+' lbr', M+158, y+5);
+
+      // Garis bawah tipis
+      doc.setDrawColor(220,240,225);
+      doc.line(M,y+7,M+182,y+7);
+      y+=9;
     });
   }
   y+=4;checkPage();
