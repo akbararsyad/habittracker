@@ -793,6 +793,16 @@ function exportPDF(){
   sectionTitle('SHALAT WAJIB BERJAMAAH',[45,106,79]);
   const wStats={};WAJIB.forEach(s=>wStats[s.id]={name:s.name,done:0});
   days.forEach(d=>{const k=dateKey(d);const log=data.shalat[k]||{};WAJIB.forEach(s=>{if(log[s.id])wStats[s.id].done++;});});
+  // Total wajib
+  const totalWajibDone=WAJIB.reduce((s,w)=>s+wStats[w.id].done,0);
+  const totalWajibMax=WAJIB.length*totalDays;
+  const totalWajibPct=Math.round((totalWajibDone/totalWajibMax)*100);
+  statBox('Total Shalat',totalWajibDone+'/'+totalWajibMax,M,88,[212,243,220]);
+  statBox('Persentase',totalWajibPct+'%',M+94,88,[212,243,220]);
+  y+=20;
+  doc.setFillColor(212,243,220);doc.roundedRect(M,y,182,5,1,1,'F');
+  doc.setFillColor(45,106,79);if(totalWajibPct>0)doc.roundedRect(M,y,182*(totalWajibPct/100),5,1,1,'F');
+  y+=10;checkPage();
   WAJIB.forEach(s=>{progressRow(s.name,wStats[s.id].done,totalDays,[64,145,108]);});
   y+=2;checkPage();
 
@@ -800,6 +810,16 @@ function exportPDF(){
   sectionTitle('SHALAT SUNNAH',[183,147,76]);
   const sStats={};SUNNAH.forEach(s=>sStats[s.id]={name:s.name,done:0});
   days.forEach(d=>{const k=dateKey(d);const log=data.shalat[k]||{};SUNNAH.forEach(s=>{if(log[s.id])sStats[s.id].done++;});});
+  // Total sunnah
+  const totalSunnahDone=SUNNAH.reduce((s,sn)=>s+sStats[sn.id].done,0);
+  const totalSunnahMax=SUNNAH.length*totalDays;
+  const totalSunnahPct=Math.round((totalSunnahDone/totalSunnahMax)*100);
+  statBox('Total Sunnah',totalSunnahDone+'/'+totalSunnahMax,M,88,[253,243,208]);
+  statBox('Persentase',totalSunnahPct+'%',M+94,88,[253,243,208]);
+  y+=20;
+  doc.setFillColor(253,243,208);doc.roundedRect(M,y,182,5,1,1,'F');
+  doc.setFillColor(183,147,76);if(totalSunnahPct>0)doc.roundedRect(M,y,182*(totalSunnahPct/100),5,1,1,'F');
+  y+=10;checkPage();
   SUNNAH.forEach(s=>{progressRow(s.name,sStats[s.id].done,totalDays,[183,147,76]);});
 
   // FOOTER
