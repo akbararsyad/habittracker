@@ -721,7 +721,7 @@ function exportPDF(){
   function checkPage(){if(y>270){doc.addPage();y=18;}}
 
   // ── KHATAM ──
-  sectionTitle('⭐  Progress Khatam Al-Quran');
+  sectionTitle('PROGRESS KHATAM AL-QURAN');
   const cur=data.khatam.currentSurat;
   const kpct=Math.round((cur/114)*100);
   statBox('Posisi surat',cur,M,58,[212,243,220]);
@@ -737,7 +737,7 @@ function exportPDF(){
   y+=10;checkPage();
 
   // ── TILAWAH ──
-  sectionTitle('📖  Tilawah Al-Quran');
+  sectionTitle('TILAWAH AL-QURAN');
   const tilList=data.tilawah.filter(t=>days.some(d=>dateStr(d)===t.date));
   const totalLembar=tilList.reduce((s,t)=>s+(t.lembar||0),0);
   const hariTilawah=new Set(tilList.map(t=>t.date)).size;
@@ -761,14 +761,14 @@ function exportPDF(){
   y+=4;checkPage();
 
   // ── WAJIB ──
-  sectionTitle('🕌  Shalat Wajib Berjamaah',[45,106,79]);
+  sectionTitle('SHALAT WAJIB BERJAMAAH',[45,106,79]);
   const wStats={};WAJIB.forEach(s=>wStats[s.id]={name:s.name,done:0});
   days.forEach(d=>{const k=dateKey(d);const log=data.shalat[k]||{};WAJIB.forEach(s=>{if(log[s.id])wStats[s.id].done++;});});
   WAJIB.forEach(s=>{progressRow(s.name,wStats[s.id].done,totalDays,[64,145,108]);});
   y+=2;checkPage();
 
   // ── SUNNAH ──
-  sectionTitle('✨  Shalat Sunnah',[183,147,76]);
+  sectionTitle('SHALAT SUNNAH',[183,147,76]);
   const sStats={};SUNNAH.forEach(s=>sStats[s.id]={name:s.name,done:0});
   days.forEach(d=>{const k=dateKey(d);const log=data.shalat[k]||{};SUNNAH.forEach(s=>{if(log[s.id])sStats[s.id].done++;});});
   SUNNAH.forEach(s=>{progressRow(s.name,sStats[s.id].done,totalDays,[183,147,76]);});
