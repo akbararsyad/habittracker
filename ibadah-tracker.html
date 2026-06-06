@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Catatan Ibadah Harianku</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#2d6a4f;--green2:#40916c;--green3:#74c69d;--green4:#d8f3dc;
+  --gold:#b7934c;
+  --text:#1a2e1a;--text2:#4a6741;--text3:#7a9e7e;
+  --bg:#f7f3e3;--white:#ffffff;
+  --border:rgba(45,106,79,0.15);--border2:rgba(45,106,79,0.3);
+  --radius:12px;--radius-lg:18px;--shadow:0 2px 16px rgba(45,106,79,0.08);
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;background-image:radial-gradient(ellipse at 20% 0%,rgba(116,198,157,0.12) 0%,transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(183,147,76,0.08) 0%,transparent 50%);}
+.header{background:var(--green);padding:1.5rem 1rem 4rem;text-align:center;position:relative;overflow:hidden;}
+.header::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+.header-inner{position:relative;z-index:1;}
+.header h1{font-family:'Amiri',serif;font-size:26px;color:#fff;margin-bottom:4px;}
+.header-arabic{font-family:'Amiri',serif;font-size:20px;color:rgba(255,255,255,0.7);margin-bottom:6px;direction:rtl;}
+.header-date{font-size:12px;color:rgba(255,255,255,0.6);}
+.nav-card{max-width:680px;margin:-2.5rem auto 0;padding:0 1rem;position:relative;z-index:10;}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;background:var(--white);border-radius:var(--radius-lg);padding:7px;box-shadow:var(--shadow);border:0.5px solid var(--border);}
+.tab{padding:8px 2px;border:none;background:none;border-radius:10px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:500;color:var(--text2);transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.tab-icon{font-size:17px;}
+.tab.active{background:var(--green);color:#fff;}
+.tab:not(.active):hover{background:var(--green4);}
+.container{max-width:680px;margin:1.5rem auto;padding:0 1rem 3rem;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+.date-nav{display:flex;align-items:center;justify-content:space-between;background:var(--white);border-radius:var(--radius);padding:11px 14px;margin-bottom:1rem;border:0.5px solid var(--border);box-shadow:var(--shadow);}
+.date-nav-btn{background:none;border:0.5px solid var(--border2);border-radius:8px;padding:5px 12px;cursor:pointer;font-size:13px;color:var(--text2);font-family:inherit;}
+.date-nav-btn:hover{background:var(--green4);}
+.date-label{font-size:13px;font-weight:600;color:var(--text);text-align:center;flex:1;}
+.section-card{background:var(--white);border-radius:var(--radius-lg);border:0.5px solid var(--border);box-shadow:var(--shadow);margin-bottom:1rem;overflow:hidden;}
+.section-head{padding:12px 14px;display:flex;align-items:center;gap:8px;border-bottom:0.5px solid var(--border);}
+.section-icon{font-size:18px;}
+.section-title{font-size:14px;font-weight:600;color:var(--text);}
+.section-sub{font-size:12px;color:var(--text3);margin-left:auto;}
+.shalat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;padding:10px;}
+.shalat-item{border:0.5px solid var(--border2);border-radius:10px;padding:9px 11px;cursor:pointer;transition:all 0.15s;user-select:none;}
+.shalat-item:hover{background:var(--green4);}
+.shalat-item.checked{background:var(--green);border-color:var(--green);color:#fff;}
+.shalat-name{font-size:12px;font-weight:600;display:block;margin-bottom:2px;}
+.shalat-rakaat{font-size:10px;opacity:0.7;}
+.shalat-check{float:right;font-size:15px;margin-top:-1px;}
+.progress-wrap{padding:10px 14px;border-top:0.5px solid var(--border);}
+.progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:5px;}
+.progress-bar{height:7px;background:var(--green4);border-radius:99px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--green2);border-radius:99px;transition:width 0.4s;}
+.tilawah-form{padding:14px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;}
+input[type=text],input[type=number],select,textarea{padding:8px 11px;border:0.5px solid var(--border2);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;outline:none;width:100%;transition:border 0.15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--green2);}
+input[readonly]{background:var(--green4);color:var(--green);font-weight:600;cursor:default;}
+textarea{height:65px;resize:vertical;}
+.save-btn{width:100%;padding:11px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background 0.15s;margin-top:4px;}
+.save-btn:hover{background:var(--green2);}
+.save-btn:active{transform:scale(0.99);}
+.log-list{display:flex;flex-direction:column;gap:9px;}
+.log-card{background:var(--white);border-radius:var(--radius);border:0.5px solid var(--border);padding:12px 14px;box-shadow:var(--shadow);}
+.log-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px;}
+.log-date{font-size:11px;color:var(--text3);}
+.log-surat{font-size:14px;font-weight:600;color:var(--text);}
+.log-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:5px;}
+.log-badge{font-size:11px;background:var(--green4);color:var(--green);padding:3px 9px;border-radius:99px;font-weight:600;}
+.log-badge.gold{background:#fdf3d0;color:var(--gold);}
+.log-badge.purple{background:#f0eeff;color:#6c5ce7;}
+.log-note{font-size:12px;color:var(--text2);margin-top:7px;font-style:italic;line-height:1.5;}
+.del-log{background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:2px 6px;border-radius:4px;flex-shrink:0;}
+.del-log:hover{color:#c0392b;background:#fdecea;}
+/* KHATAM */
+.khatam-card{background:var(--white);border-radius:var(--radius-lg);border:0.5px solid var(--border);box-shadow:var(--shadow);padding:16px;margin-bottom:1rem;}
+.khatam-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.khatam-title{font-size:14px;font-weight:600;color:var(--text);}
+.khatam-pct{font-size:22px;font-weight:600;color:var(--green);}
+.khatam-bar-wrap{height:10px;background:var(--green4);border-radius:99px;overflow:hidden;margin-bottom:8px;}
+.khatam-bar-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green3));border-radius:99px;transition:width 0.5s;}
+.khatam-info{font-size:12px;color:var(--text2);margin-bottom:12px;}
+.khatam-surat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(28px,1fr));gap:3px;margin-bottom:12px;}
+.ks{width:100%;aspect-ratio:1;border-radius:4px;font-size:9px;display:flex;align-items:center;justify-content:center;border:0.5px solid var(--border);color:var(--text3);cursor:default;transition:background 0.1s;}
+.ks.done{background:var(--green);border-color:var(--green);color:#fff;}
+.ks.current{background:var(--gold);border-color:var(--gold);color:#fff;}
+.khatam-list{display:flex;flex-direction:column;gap:6px;}
+.khatam-item{background:var(--green4);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--green);font-weight:500;display:flex;justify-content:space-between;align-items:center;}
+.mark-khatam-btn{padding:8px 14px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;width:100%;margin-top:8px;}
+.mark-khatam-btn:hover{opacity:0.9;}
+/* REKAP */
+.period-toggle{display:flex;gap:6px;margin-bottom:1rem;}
+.period-btn{flex:1;padding:8px;border:0.5px solid var(--border2);border-radius:8px;background:var(--white);color:var(--text2);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;}
+.period-btn.active{background:var(--green);color:#fff;border-color:var(--green);}
+.rekap-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:1rem;}
+.rekap-card{background:var(--white);border-radius:var(--radius);border:0.5px solid var(--border);padding:13px;text-align:center;box-shadow:var(--shadow);}
+.rekap-num{font-size:26px;font-weight:600;color:var(--green);}
+.rekap-lbl{font-size:11px;color:var(--text3);margin-top:2px;}
+.nav-row{display:flex;align-items:center;gap:10px;background:var(--white);border-radius:var(--radius);padding:10px 14px;margin-bottom:1rem;border:0.5px solid var(--border);box-shadow:var(--shadow);}
+.nav-lbl{flex:1;text-align:center;font-size:13px;font-weight:600;}
+.shalat-rekap-row{background:var(--white);border-radius:var(--radius);border:0.5px solid var(--border);padding:11px 14px;margin-bottom:6px;box-shadow:var(--shadow);}
+.shalat-rekap-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.shalat-rekap-bar{height:6px;background:var(--green4);border-radius:99px;overflow:hidden;margin-bottom:3px;}
+.shalat-rekap-fill{height:100%;background:var(--green2);border-radius:99px;}
+.shalat-rekap-meta{font-size:11px;color:var(--text3);}
+.sunnah-rekap-row{background:var(--white);border-radius:var(--radius);border:0.5px solid var(--border);padding:11px 14px;margin-bottom:6px;box-shadow:var(--shadow);}
+.sunnah-rekap-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.sunnah-rekap-bar{height:6px;background:#fff3e0;border-radius:99px;overflow:hidden;margin-bottom:3px;}
+.sunnah-rekap-fill{height:100%;background:var(--gold);border-radius:99px;}
+.sunnah-rekap-meta{font-size:11px;color:var(--text3);}
+.chart-wrap{background:var(--white);border-radius:var(--radius-lg);border:0.5px solid var(--border);padding:14px;margin-bottom:1rem;box-shadow:var(--shadow);}
+.chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;}
+.empty-state{text-align:center;padding:2rem 1rem;color:var(--text3);font-size:13px;border:0.5px dashed var(--border2);border-radius:var(--radius-lg);background:var(--white);}
+.empty-icon{font-size:32px;display:block;margin-bottom:8px;}
+.section-lbl{font-size:12px;font-weight:600;color:var(--text2);margin:12px 4px 8px;text-transform:uppercase;letter-spacing:0.5px;}
+.export-btn{width:100%;padding:12px;background:#fff;border:1.5px solid var(--green);color:var(--green);border-radius:10px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:4px;transition:all 0.15s;}
+.export-btn:hover{background:var(--green4);}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-inner">
+    <div class="header-arabic">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم</div>
+    <h1>Catatan Ibadah Harianku</h1>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+</div>
+
+<div class="nav-card">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('shalat')"><span class="tab-icon">🕌</span>Shalat</button>
+    <button class="tab" onclick="switchTab('tilawah')"><span class="tab-icon">📖</span>Tilawah</button>
+    <button class="tab" onclick="switchTab('khatam')"><span class="tab-icon">⭐</span>Khatam</button>
+    <button class="tab" onclick="switchTab('grafik')"><span class="tab-icon">📊</span>Grafik</button>
+    <button class="tab" onclick="switchTab('rekap')"><span class="tab-icon">📋</span>Rekap</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- SHALAT -->
+  <div id="tab-shalat" class="tab-content active">
+    <div class="date-nav">
+      <button class="date-nav-btn" onclick="changeDay('shalat',-1)">‹ Kemarin</button>
+      <span class="date-label" id="shalatDateLabel"></span>
+      <button class="date-nav-btn" onclick="changeDay('shalat',1)">Besok ›</button>
+    </div>
+    <div class="section-card">
+      <div class="section-head"><span class="section-icon">🕌</span><span class="section-title">Shalat Wajib (Berjamaah)</span><span class="section-sub" id="wajibCount">0/5</span></div>
+      <div class="shalat-grid" id="wajibGrid"></div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progress Wajib</span><span id="wajibPct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="wajibBar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-head"><span class="section-icon">✨</span><span class="section-title">Shalat Sunnah</span><span class="section-sub" id="sunnahCount">0/10</span></div>
+      <div class="shalat-grid" id="sunnahGrid"></div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progress Sunnah</span><span id="sunnahPct">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="sunnahBar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TILAWAH -->
+  <div id="tab-tilawah" class="tab-content">
+    <div class="date-nav">
+      <button class="date-nav-btn" onclick="changeDay('tilawah',-1)">‹ Kemarin</button>
+      <span class="date-label" id="tilawahDateLabel"></span>
+      <button class="date-nav-btn" onclick="changeDay('tilawah',1)">Besok ›</button>
+    </div>
+    <div class="section-card" style="margin-bottom:1rem">
+      <div class="section-head"><span class="section-icon">📝</span><span class="section-title">Tambah Catatan Tilawah</span></div>
+      <div class="tilawah-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Juz</label>
+            <select id="tilJuz">
+              <option value="">Pilih Juz</option>
+              <option value="1">Juz 1</option><option value="2">Juz 2</option><option value="3">Juz 3</option><option value="4">Juz 4</option><option value="5">Juz 5</option><option value="6">Juz 6</option><option value="7">Juz 7</option><option value="8">Juz 8</option><option value="9">Juz 9</option><option value="10">Juz 10</option><option value="11">Juz 11</option><option value="12">Juz 12</option><option value="13">Juz 13</option><option value="14">Juz 14</option><option value="15">Juz 15</option><option value="16">Juz 16</option><option value="17">Juz 17</option><option value="18">Juz 18</option><option value="19">Juz 19</option><option value="20">Juz 20</option><option value="21">Juz 21</option><option value="22">Juz 22</option><option value="23">Juz 23</option><option value="24">Juz 24</option><option value="25">Juz 25</option><option value="26">Juz 26</option><option value="27">Juz 27</option><option value="28">Juz 28</option><option value="29">Juz 29</option><option value="30">Juz 30</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Jumlah Lembar (halaman ÷ 2)</label>
+            <input type="number" id="tilLembar" min="1" placeholder="—" readonly/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Surat Mulai</label>
+            <select id="tilSuratMulai"><option value="">Pilih Surat</option></select>
+          </div>
+          <div class="form-group">
+            <label>Ayat Mulai</label>
+            <input type="number" id="tilAyatMulai" min="1" placeholder="1"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Surat Selesai</label>
+            <select id="tilSuratSelesai"><option value="">Pilih Surat</option></select>
+          </div>
+          <div class="form-group">
+            <label>Ayat Selesai</label>
+            <input type="number" id="tilAyatSelesai" min="1" placeholder="286"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Halaman Mulai</label>
+            <input type="number" id="tilHalMulai" min="1" max="604" placeholder="1" oninput="autoLembar()"/>
+          </div>
+          <div class="form-group">
+            <label>Halaman Selesai</label>
+            <input type="number" id="tilHalSelesai" min="1" max="604" placeholder="604" oninput="autoLembar()"/>
+          </div>
+        </div>
+        <div class="form-group full" style="margin-bottom:10px">
+          <label>Catatan</label>
+          <textarea id="tilCatatan" placeholder="Refleksi, ayat favorit, dll..."></textarea>
+        </div>
+        <button class="save-btn" onclick="saveTilawah()">💾 Simpan Catatan Tilawah</button>
+      </div>
+    </div>
+    <div class="section-lbl" id="tilawahListLbl">Catatan Tilawah Hari Ini</div>
+    <div id="tilawahList"></div>
+  </div>
+
+  <!-- KHATAM -->
+  <div id="tab-khatam" class="tab-content">
+    <div class="khatam-card">
+      <div class="khatam-header">
+        <span class="khatam-title">⭐ Progress Khatam Al-Quran</span>
+        <span class="khatam-pct" id="khatamPct">0%</span>
+      </div>
+      <div class="khatam-bar-wrap"><div class="khatam-bar-fill" id="khatamBar" style="width:0%"></div></div>
+      <div class="khatam-info" id="khatamInfo">Sudah sampai surat ke-0 dari 114</div>
+      <div class="khatam-surat-grid" id="khatamGrid"></div>
+      <button class="mark-khatam-btn" onclick="markKhatam()">🎉 Tandai Khatam Sekarang!</button>
+    </div>
+    <div class="section-lbl">Riwayat Khatam</div>
+    <div id="khatamHistory"></div>
+  </div>
+
+  <!-- GRAFIK -->
+  <div id="tab-grafik" class="tab-content">
+    <div class="nav-row">
+      <button class="date-nav-btn" onclick="changeGrafikMonth(-1)">‹</button>
+      <span class="nav-lbl" id="grafikMonthLabel"></span>
+      <button class="date-nav-btn" onclick="changeGrafikMonth(1)">›</button>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">📖 Lembar Tilawah per Hari</div>
+      <canvas id="chartLembar" height="160"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">🕌 Shalat Wajib Berjamaah per Hari (maks 5)</div>
+      <canvas id="chartShalat" height="160"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">✨ Shalat Sunnah per Hari (maks 10)</div>
+      <canvas id="chartSunnah" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- REKAP -->
+  <div id="tab-rekap" class="tab-content">
+    <div class="period-toggle">
+      <button class="period-btn active" id="btnMingguan" onclick="setPeriod('mingguan')">📅 Mingguan</button>
+      <button class="period-btn" id="btnBulanan" onclick="setPeriod('bulanan')">🗓 Bulanan</button>
+    </div>
+    <div class="nav-row">
+      <button class="date-nav-btn" onclick="rekapNav(-1)">‹</button>
+      <span class="nav-lbl" id="rekapNavLabel"></span>
+      <button class="date-nav-btn" onclick="rekapNav(1)">›</button>
+    </div>
+    <div class="section-lbl">📖 Tilawah</div>
+    <div class="rekap-grid" id="rekapTilawah"></div>
+    <div class="section-lbl">🕌 Shalat Wajib Berjamaah</div>
+    <div id="rekapWajib"></div>
+    <div class="section-lbl">✨ Shalat Sunnah</div>
+    <div id="rekapSunnah"></div>
+    <button class="export-btn" onclick="exportPDF()">⬇️ Ekspor Rekap ke PDF</button>
+  </div>
+
+</div>
+
+<script>
+const SURAT_LIST=[
+  {n:1,nama:"Al-Fatihah",ayat:7},{n:2,nama:"Al-Baqarah",ayat:286},{n:3,nama:"Ali 'Imran",ayat:200},
+  {n:4,nama:"An-Nisa'",ayat:176},{n:5,nama:"Al-Ma'idah",ayat:120},{n:6,nama:"Al-An'am",ayat:165},
+  {n:7,nama:"Al-A'raf",ayat:206},{n:8,nama:"Al-Anfal",ayat:75},{n:9,nama:"At-Taubah",ayat:129},
+  {n:10,nama:"Yunus",ayat:109},{n:11,nama:"Hud",ayat:123},{n:12,nama:"Yusuf",ayat:111},
+  {n:13,nama:"Ar-Ra'd",ayat:43},{n:14,nama:"Ibrahim",ayat:52},{n:15,nama:"Al-Hijr",ayat:99},
+  {n:16,nama:"An-Nahl",ayat:128},{n:17,nama:"Al-Isra'",ayat:111},{n:18,nama:"Al-Kahf",ayat:110},
+  {n:19,nama:"Maryam",ayat:98},{n:20,nama:"Ta Ha",ayat:135},{n:21,nama:"Al-Anbiya'",ayat:112},
+  {n:22,nama:"Al-Hajj",ayat:78},{n:23,nama:"Al-Mu'minun",ayat:118},{n:24,nama:"An-Nur",ayat:64},
+  {n:25,nama:"Al-Furqan",ayat:77},{n:26,nama:"Asy-Syu'ara'",ayat:227},{n:27,nama:"An-Naml",ayat:93},
+  {n:28,nama:"Al-Qasas",ayat:88},{n:29,nama:"Al-'Ankabut",ayat:69},{n:30,nama:"Ar-Rum",ayat:60},
+  {n:31,nama:"Luqman",ayat:34},{n:32,nama:"As-Sajdah",ayat:30},{n:33,nama:"Al-Ahzab",ayat:73},
+  {n:34,nama:"Saba'",ayat:54},{n:35,nama:"Fatir",ayat:45},{n:36,nama:"Ya Sin",ayat:83},
+  {n:37,nama:"As-Saffat",ayat:182},{n:38,nama:"Sad",ayat:88},{n:39,nama:"Az-Zumar",ayat:75},
+  {n:40,nama:"Ghafir",ayat:85},{n:41,nama:"Fussilat",ayat:54},{n:42,nama:"Asy-Syura",ayat:53},
+  {n:43,nama:"Az-Zukhruf",ayat:89},{n:44,nama:"Ad-Dukhan",ayat:59},{n:45,nama:"Al-Jasiyah",ayat:37},
+  {n:46,nama:"Al-Ahqaf",ayat:35},{n:47,nama:"Muhammad",ayat:38},{n:48,nama:"Al-Fath",ayat:29},
+  {n:49,nama:"Al-Hujurat",ayat:18},{n:50,nama:"Qaf",ayat:45},{n:51,nama:"Az-Zariyat",ayat:60},
+  {n:52,nama:"At-Tur",ayat:49},{n:53,nama:"An-Najm",ayat:62},{n:54,nama:"Al-Qamar",ayat:55},
+  {n:55,nama:"Ar-Rahman",ayat:78},{n:56,nama:"Al-Waqi'ah",ayat:96},{n:57,nama:"Al-Hadid",ayat:29},
+  {n:58,nama:"Al-Mujadilah",ayat:22},{n:59,nama:"Al-Hasyr",ayat:24},{n:60,nama:"Al-Mumtahanah",ayat:13},
+  {n:61,nama:"As-Saf",ayat:14},{n:62,nama:"Al-Jumu'ah",ayat:11},{n:63,nama:"Al-Munafiqun",ayat:11},
+  {n:64,nama:"At-Tagabun",ayat:18},{n:65,nama:"At-Talaq",ayat:12},{n:66,nama:"At-Tahrim",ayat:12},
+  {n:67,nama:"Al-Mulk",ayat:30},{n:68,nama:"Al-Qalam",ayat:52},{n:69,nama:"Al-Haqqah",ayat:52},
+  {n:70,nama:"Al-Ma'arij",ayat:44},{n:71,nama:"Nuh",ayat:28},{n:72,nama:"Al-Jinn",ayat:28},
+  {n:73,nama:"Al-Muzzammil",ayat:20},{n:74,nama:"Al-Muddassir",ayat:56},{n:75,nama:"Al-Qiyamah",ayat:40},
+  {n:76,nama:"Al-Insan",ayat:31},{n:77,nama:"Al-Mursalat",ayat:50},{n:78,nama:"An-Naba'",ayat:40},
+  {n:79,nama:"An-Nazi'at",ayat:46},{n:80,nama:"'Abasa",ayat:42},{n:81,nama:"At-Takwir",ayat:29},
+  {n:82,nama:"Al-Infitar",ayat:19},{n:83,nama:"Al-Mutaffifin",ayat:36},{n:84,nama:"Al-Insyiqaq",ayat:25},
+  {n:85,nama:"Al-Buruj",ayat:22},{n:86,nama:"At-Tariq",ayat:17},{n:87,nama:"Al-A'la",ayat:19},
+  {n:88,nama:"Al-Gasyiyah",ayat:26},{n:89,nama:"Al-Fajr",ayat:30},{n:90,nama:"Al-Balad",ayat:20},
+  {n:91,nama:"Asy-Syams",ayat:15},{n:92,nama:"Al-Lail",ayat:21},{n:93,nama:"Ad-Duha",ayat:11},
+  {n:94,nama:"Asy-Syarh",ayat:8},{n:95,nama:"At-Tin",ayat:8},{n:96,nama:"Al-'Alaq",ayat:19},
+  {n:97,nama:"Al-Qadr",ayat:5},{n:98,nama:"Al-Bayyinah",ayat:8},{n:99,nama:"Az-Zalzalah",ayat:8},
+  {n:100,nama:"Al-'Adiyat",ayat:11},{n:101,nama:"Al-Qari'ah",ayat:11},{n:102,nama:"At-Takasur",ayat:8},
+  {n:103,nama:"Al-'Asr",ayat:3},{n:104,nama:"Al-Humazah",ayat:9},{n:105,nama:"Al-Fil",ayat:5},
+  {n:106,nama:"Quraisy",ayat:4},{n:107,nama:"Al-Ma'un",ayat:7},{n:108,nama:"Al-Kausar",ayat:3},
+  {n:109,nama:"Al-Kafirun",ayat:6},{n:110,nama:"An-Nasr",ayat:3},{n:111,nama:"Al-Masad",ayat:5},
+  {n:112,nama:"Al-Ikhlas",ayat:4},{n:113,nama:"Al-Falaq",ayat:5},{n:114,nama:"An-Nas",ayat:6},
+];
+
+const WAJIB=[
+  {id:'subuh',name:'Subuh',rakaat:'2 rakaat'},{id:'dzuhur',name:'Dzuhur',rakaat:'4 rakaat'},
+  {id:'ashar',name:'Ashar',rakaat:'4 rakaat'},{id:'maghrib',name:'Maghrib',rakaat:'3 rakaat'},
+  {id:'isya',name:'Isya',rakaat:'4 rakaat'},
+];
+const SUNNAH=[
+  {id:'tahajud',name:'Tahajud',rakaat:'2–8 rakaat'},{id:'witir',name:'Witir',rakaat:'1–11 rakaat'},
+  {id:'qiyamul_lail',name:'Qiyamul Lail',rakaat:'2–8 rakaat'},
+  {id:'rawatib_qbl_subuh',name:'Rawatib Qabliyah Subuh',rakaat:'2 rakaat'},
+  {id:'dhuha',name:'Dhuha',rakaat:'2–12 rakaat'},
+  {id:'rawatib_qbl_dzuhur2',name:'Rawatib Qabliyah Dzuhur 2',rakaat:'2 rakaat'},
+  {id:'rawatib_qbl_dzuhur4',name:'Rawatib Qabliyah Dzuhur 4',rakaat:'4 rakaat'},
+  {id:'rawatib_bkd_dzuhur',name:"Rawatib Ba'diyah Dzuhur",rakaat:'2 rakaat'},
+  {id:'rawatib_bkd_maghrib',name:"Rawatib Ba'diyah Maghrib",rakaat:'2 rakaat'},
+  {id:'rawatib_bkd_isya',name:"Rawatib Ba'diyah Isya",rakaat:'2 rakaat'},
+];
+const MONTHS=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+let viewDateShalat=new Date(); viewDateShalat.setHours(0,0,0,0);
+let viewDateTilawah=new Date(); viewDateTilawah.setHours(0,0,0,0);
+let grafikDate=new Date();
+let rekapDate=new Date();
+let rekapPeriod='mingguan';
+let chartInstances={};
+
+let data={shalat:{},tilawah:[],khatam:{currentSurat:1,currentAyat:1,history:[]}};
+try{
+  const s=JSON.parse(localStorage.getItem('ibadahTrackerV3')||'{}');
+  if(s.shalat) data=s;
+  if(!data.khatam) data.khatam={currentSurat:1,currentAyat:1,history:[]};
+}catch(e){}
+
+function save(){try{localStorage.setItem('ibadahTrackerV3',JSON.stringify(data));}catch(e){}}
+function dateKey(d){return `${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;}
+function dateStr(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function getDaysInMonth(y,m){return new Date(y,m+1,0).getDate();}
+function formatDate(d){
+  const days=['Ahad','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const today=new Date();today.setHours(0,0,0,0);
+  const diff=(d-today)/86400000;
+  const prefix=diff===0?'Hari ini, ':diff===-1?'Kemarin, ':diff===1?'Besok, ':'';
+  return prefix+`${days[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+function getWeekStart(d){const day=d.getDay();const diff=day===0?-6:1-day;const s=new Date(d);s.setDate(d.getDate()+diff);s.setHours(0,0,0,0);return s;}
+function getWeekEnd(d){const s=getWeekStart(d);const e=new Date(s);e.setDate(s.getDate()+6);return e;}
+function weekLabel(anchor){const s=getWeekStart(anchor);const e=getWeekEnd(anchor);return `${s.getDate()} ${MONTHS[s.getMonth()]} – ${e.getDate()} ${MONTHS[e.getMonth()]} ${e.getFullYear()}`;}
+
+// Isi dropdown surat
+function fillSuratDropdowns(){
+  const opts=`<option value="">Pilih Surat</option>`+SURAT_LIST.map(s=>`<option value="${s.n}">${s.n}. ${s.nama}</option>`).join('');
+  document.getElementById('tilSuratMulai').innerHTML=opts;
+  document.getElementById('tilSuratSelesai').innerHTML=opts;
+}
+
+function changeDay(tab,dir){
+  if(tab==='shalat'){viewDateShalat=new Date(viewDateShalat);viewDateShalat.setDate(viewDateShalat.getDate()+dir);renderShalat();}
+  else{viewDateTilawah=new Date(viewDateTilawah);viewDateTilawah.setDate(viewDateTilawah.getDate()+dir);renderTilawahHeader();renderTilawahList();}
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  ['shalat','tilawah','khatam','grafik','rekap'].forEach((t,i)=>document.querySelectorAll('.tab')[i].classList.toggle('active',t===name));
+  if(name==='rekap') renderRekap();
+  if(name==='tilawah'){renderTilawahHeader();renderTilawahList();}
+  if(name==='grafik') renderGrafik();
+  if(name==='khatam') renderKhatam();
+}
+
+function setPeriod(p){
+  rekapPeriod=p;rekapDate=new Date();
+  document.getElementById('btnMingguan').classList.toggle('active',p==='mingguan');
+  document.getElementById('btnBulanan').classList.toggle('active',p==='bulanan');
+  renderRekap();
+}
+
+function rekapNav(dir){
+  rekapDate=new Date(rekapDate);
+  if(rekapPeriod==='bulanan') rekapDate.setMonth(rekapDate.getMonth()+dir);
+  else rekapDate.setDate(rekapDate.getDate()+dir*7);
+  renderRekap();
+}
+
+function toggleShalat(id){
+  const k=dateKey(viewDateShalat);
+  if(!data.shalat[k])data.shalat[k]={};
+  data.shalat[k][id]=!data.shalat[k][id];
+  save();renderShalat();
+}
+
+function renderShalat(){
+  const k=dateKey(viewDateShalat);const log=data.shalat[k]||{};
+  document.getElementById('shalatDateLabel').textContent=formatDate(viewDateShalat);
+  let wd=0;
+  document.getElementById('wajibGrid').innerHTML=WAJIB.map(s=>{
+    const c=!!log[s.id];if(c)wd++;
+    return `<div class="shalat-item${c?' checked':''}" onclick="toggleShalat('${s.id}')">
+      <span class="shalat-check">${c?'✓':'○'}</span>
+      <span class="shalat-name">${s.name}</span>
+      <span class="shalat-rakaat">${s.rakaat}</span>
+    </div>`;
+  }).join('');
+  const wp=Math.round((wd/WAJIB.length)*100);
+  document.getElementById('wajibCount').textContent=`${wd}/${WAJIB.length}`;
+  document.getElementById('wajibPct').textContent=wp+'%';
+  document.getElementById('wajibBar').style.width=wp+'%';
+  let sd=0;
+  document.getElementById('sunnahGrid').innerHTML=SUNNAH.map(s=>{
+    const c=!!log[s.id];if(c)sd++;
+    return `<div class="shalat-item${c?' checked':''}" onclick="toggleShalat('${s.id}')">
+      <span class="shalat-check">${c?'✓':'○'}</span>
+      <span class="shalat-name">${s.name}</span>
+      <span class="shalat-rakaat">${s.rakaat}</span>
+    </div>`;
+  }).join('');
+  const sp=Math.round((sd/SUNNAH.length)*100);
+  document.getElementById('sunnahCount').textContent=`${sd}/${SUNNAH.length}`;
+  document.getElementById('sunnahPct').textContent=sp+'%';
+  document.getElementById('sunnahBar').style.width=sp+'%';
+}
+
+function autoLembar(){
+  const a=parseInt(document.getElementById('tilHalMulai').value)||0;
+  const b=parseInt(document.getElementById('tilHalSelesai').value)||0;
+  if(a>0&&b>=a){
+    const totalHalaman=b-a+1;
+    document.getElementById('tilLembar').value=Math.ceil(totalHalaman/2);
+  } else {
+    document.getElementById('tilLembar').value='';
+  }
+}
+
+function renderTilawahHeader(){
+  document.getElementById('tilawahDateLabel').textContent=formatDate(viewDateTilawah);
+  const ds=dateStr(viewDateTilawah);
+  const c=data.tilawah.filter(t=>t.date===ds).length;
+  document.getElementById('tilawahListLbl').textContent=`Catatan Tilawah — ${c} entri`;
+}
+
+function saveTilawah(){
+  const juz=document.getElementById('tilJuz').value;
+  const suratMulaiIdx=document.getElementById('tilSuratMulai').value;
+  const suratSelesaiIdx=document.getElementById('tilSuratSelesai').value;
+  const ayatMulai=document.getElementById('tilAyatMulai').value;
+  const ayatSelesai=document.getElementById('tilAyatSelesai').value;
+  const halMulai=document.getElementById('tilHalMulai').value;
+  const halSelesai=document.getElementById('tilHalSelesai').value;
+  const lembar=document.getElementById('tilLembar').value;
+  const catatan=document.getElementById('tilCatatan').value.trim();
+
+  if(!juz&&!suratMulaiIdx){alert('Isi minimal juz atau surat mulai ya!');return;}
+
+  const suratMulai=suratMulaiIdx?SURAT_LIST[parseInt(suratMulaiIdx)-1]:null;
+  const suratSelesai=suratSelesaiIdx?SURAT_LIST[parseInt(suratSelesaiIdx)-1]:null;
+
+  // Update posisi khatam otomatis jika surat selesai lebih jauh
+  if(suratSelesai){
+    const cur=data.khatam.currentSurat;
+    if(suratSelesai.n>cur||(suratSelesai.n===cur&&parseInt(ayatSelesai||0)>data.khatam.currentAyat)){
+      data.khatam.currentSurat=suratSelesai.n;
+      data.khatam.currentAyat=parseInt(ayatSelesai)||1;
+    }
+  }
+
+  data.tilawah.unshift({
+    id:Date.now(),date:dateStr(viewDateTilawah),dateLabel:formatDate(viewDateTilawah),
+    juz,
+    suratMulaiN:suratMulaiIdx?parseInt(suratMulaiIdx):null,
+    suratMulaiNama:suratMulai?suratMulai.nama:'',
+    ayatMulai,
+    suratSelesaiN:suratSelesaiIdx?parseInt(suratSelesaiIdx):null,
+    suratSelesaiNama:suratSelesai?suratSelesai.nama:'',
+    ayatSelesai,
+    halMulai,halSelesai,
+    lembar:lembar?parseInt(lembar):null,
+    catatan,
+  });
+  save();
+  ['tilAyatMulai','tilAyatSelesai','tilHalMulai','tilHalSelesai','tilLembar','tilCatatan'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('tilJuz').value='';
+  document.getElementById('tilSuratMulai').value='';
+  document.getElementById('tilSuratSelesai').value='';
+  renderTilawahHeader();renderTilawahList();
+}
+
+function deleteTilawah(id){
+  if(!confirm('Hapus catatan ini?'))return;
+  data.tilawah=data.tilawah.filter(t=>t.id!==id);
+  save();renderTilawahHeader();renderTilawahList();
+}
+
+function renderTilawahList(){
+  const el=document.getElementById('tilawahList');
+  const ds=dateStr(viewDateTilawah);
+  const list=data.tilawah.filter(t=>t.date===ds);
+  if(!list.length){el.innerHTML=`<div class="empty-state"><span class="empty-icon">📖</span>Belum ada catatan untuk hari ini.</div>`;return;}
+  el.innerHTML=`<div class="log-list">${list.map(t=>{
+    const range=t.suratMulaiNama&&t.suratSelesaiNama
+      ?`${t.suratMulaiNama}${t.ayatMulai?' ('+t.ayatMulai+')':''} → ${t.suratSelesaiNama}${t.ayatSelesai?' ('+t.ayatSelesai+')':''}`
+      :t.suratMulaiNama?`${t.suratMulaiNama}${t.ayatMulai?' ('+t.ayatMulai+')':''}`:'-';
+    return `<div class="log-card">
+      <div class="log-header">
+        <div>
+          <div class="log-surat">${range}</div>
+          <div class="log-date">${t.dateLabel}</div>
+        </div>
+        <button class="del-log" onclick="deleteTilawah(${t.id})">🗑</button>
+      </div>
+      <div class="log-meta">
+        ${t.juz?`<span class="log-badge">Juz ${t.juz}</span>`:''}
+        ${t.halMulai&&t.halSelesai?`<span class="log-badge">Hal ${t.halMulai}–${t.halSelesai}</span>`:''}
+        ${t.lembar?`<span class="log-badge gold">${t.lembar} lembar</span>`:''}
+      </div>
+      ${t.catatan?`<div class="log-note">"${t.catatan}"</div>`:''}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function renderKhatam(){
+  const cur=data.khatam.currentSurat;
+  const pct=Math.round((cur/114)*100);
+  document.getElementById('khatamPct').textContent=pct+'%';
+  document.getElementById('khatamBar').style.width=pct+'%';
+  const s=SURAT_LIST[cur-1];
+  document.getElementById('khatamInfo').textContent=`Posisi terakhir: ${s.nama} (ke-${cur} dari 114)`;
+
+  // Grid 114 surat
+  document.getElementById('khatamGrid').innerHTML=SURAT_LIST.map(s=>{
+    const cls=s.n<cur?'done':s.n===cur?'current':'';
+    return `<div class="ks ${cls}" title="${s.n}. ${s.nama}">${s.n}</div>`;
+  }).join('');
+
+  // Riwayat khatam
+  const hist=data.khatam.history;
+  const el=document.getElementById('khatamHistory');
+  if(!hist.length){el.innerHTML=`<div class="empty-state"><span class="empty-icon">⭐</span>Belum ada riwayat khatam.<br>Semangat terus membacanya!</div>`;return;}
+  el.innerHTML=`<div class="khatam-list">${hist.slice().reverse().map((h,i)=>`
+    <div class="khatam-item">
+      <span>🎉 Khatam ke-${hist.length-i}</span>
+      <span>${h.date}</span>
+    </div>`).join('')}</div>`;
+}
+
+function markKhatam(){
+  if(!confirm('Alhamdulillah! Tandai sebagai khatam Al-Quran?'))return;
+  const today=new Date();
+  data.khatam.history.push({date:`${today.getDate()} ${MONTHS[today.getMonth()]} ${today.getFullYear()}`});
+  data.khatam.currentSurat=1;
+  data.khatam.currentAyat=1;
+  save();renderKhatam();
+  alert('Alhamdulillah, selamat khatam! 🎉 Semangat untuk khatam berikutnya!');
+}
+
+function changeGrafikMonth(dir){grafikDate=new Date(grafikDate);grafikDate.setMonth(grafikDate.getMonth()+dir);renderGrafik();}
+
+function renderGrafik(){
+  const y=grafikDate.getFullYear(),m=grafikDate.getMonth();
+  document.getElementById('grafikMonthLabel').textContent=`${MONTHS[m]} ${y}`;
+  const days=getDaysInMonth(y,m);
+  const labels=Array.from({length:days},(_,i)=>i+1);
+  const lembarData=labels.map(d=>{
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    return data.tilawah.filter(t=>t.date===ds).reduce((s,t)=>s+(t.lembar||0),0);
+  });
+  const shalatData=labels.map(d=>{const k=`${y}_${m}_${d}`;const l=data.shalat[k]||{};return WAJIB.filter(s=>l[s.id]).length;});
+  const sunnahData=labels.map(d=>{const k=`${y}_${m}_${d}`;const l=data.shalat[k]||{};return SUNNAH.filter(s=>l[s.id]).length;});
+  function mkChart(id,dataset,color,maxY){
+    if(chartInstances[id])chartInstances[id].destroy();
+    chartInstances[id]=new Chart(document.getElementById(id).getContext('2d'),{
+      type:'bar',
+      data:{labels,datasets:[{data:dataset,backgroundColor:color+'55',borderColor:color,borderWidth:1.5,borderRadius:3}]},
+      options:{responsive:true,plugins:{legend:{display:false}},scales:{
+        x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0,autoSkip:true,maxTicksLimit:15}},
+        y:{beginAtZero:true,max:maxY,grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:10},stepSize:1}}
+      }}
+    });
+  }
+  mkChart('chartLembar',lembarData,'#2d6a4f',Math.max(10,...lembarData)+2);
+  mkChart('chartShalat',shalatData,'#40916c',5);
+  mkChart('chartSunnah',sunnahData,'#b7934c',10);
+}
+
+function getPeriodDays(){
+  if(rekapPeriod==='bulanan'){
+    const y=rekapDate.getFullYear(),m=rekapDate.getMonth();
+    return Array.from({length:getDaysInMonth(y,m)},(_,i)=>new Date(y,m,i+1));
+  } else {
+    const start=getWeekStart(rekapDate);
+    return Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d;});
+  }
+}
+
+function renderRekap(){
+  const days=getPeriodDays();const totalDays=days.length;
+  document.getElementById('rekapNavLabel').textContent=rekapPeriod==='bulanan'
+    ?`${MONTHS[rekapDate.getMonth()]} ${rekapDate.getFullYear()}`:weekLabel(rekapDate);
+
+  const tilList=data.tilawah.filter(t=>days.some(d=>dateStr(d)===t.date));
+  const totalLembar=tilList.reduce((s,t)=>s+(t.lembar||0),0);
+  const hariTilawah=new Set(tilList.map(t=>t.date)).size;
+  document.getElementById('rekapTilawah').innerHTML=`
+    <div class="rekap-card"><div class="rekap-num">${hariTilawah}<span style="font-size:14px;color:var(--text3)">/${totalDays}</span></div><div class="rekap-lbl">Hari tilawah</div></div>
+    <div class="rekap-card"><div class="rekap-num">${totalLembar}</div><div class="rekap-lbl">Total lembar</div></div>
+  `;
+
+  const wStats={};WAJIB.forEach(s=>wStats[s.id]={name:s.name,done:0});
+  days.forEach(d=>{const k=dateKey(d);const log=data.shalat[k]||{};WAJIB.forEach(s=>{if(log[s.id])wStats[s.id].done++;});});
+  document.getElementById('rekapWajib').innerHTML=WAJIB.map(s=>{
+    const st=wStats[s.id];const pct=Math.round((st.done/totalDays)*100);
+    return `<div class="shalat-rekap-row">
+      <div class="shalat-rekap-name">${st.name} <span style="color:var(--text3);font-weight:400;font-size:11px">berjamaah</span></div>
+      <div class="shalat-rekap-bar"><div class="shalat-rekap-fill" style="width:${pct}%"></div></div>
+      <div class="shalat-rekap-meta">${st.done}/${totalDays} hari · ${pct}%</div>
+    </div>`;
+  }).join('');
+
+  const sStats={};SUNNAH.forEach(s=>sStats[s.id]={name:s.name,done:0});
+  days.forEach(d=>{const k=dateKey(d);const log=data.shalat[k]||{};SUNNAH.forEach(s=>{if(log[s.id])sStats[s.id].done++;});});
+  document.getElementById('rekapSunnah').innerHTML=SUNNAH.map(s=>{
+    const st=sStats[s.id];const pct=Math.round((st.done/totalDays)*100);
+    return `<div class="sunnah-rekap-row">
+      <div class="sunnah-rekap-name">${st.name}</div>
+      <div class="sunnah-rekap-bar"><div class="sunnah-rekap-fill" style="width:${pct}%"></div></div>
+      <div class="sunnah-rekap-meta">${st.done}/${totalDays} hari · ${pct}%</div>
+    </div>`;
+  }).join('');
+}
+
+function exportPDF(){
+  if(!window.jspdf){alert('Library PDF belum siap.');return;}
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+  const W=210,M=14;
+  const days=getPeriodDays();const totalDays=days.length;
+  const periodeLabel=rekapPeriod==='bulanan'
+    ?`${MONTHS[rekapDate.getMonth()]} ${rekapDate.getFullYear()}`:weekLabel(rekapDate);
+  const today=new Date();
+  const todayStr=`${today.getDate()} ${MONTHS[today.getMonth()]} ${today.getFullYear()}`;
+
+  // ── HEADER ──
+  doc.setFillColor(45,106,79);
+  doc.rect(0,0,210,38,'F');
+  doc.setFontSize(20);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+  doc.text('Catatan Ibadah Harianku',M,16);
+  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(180,230,200);
+  doc.text(`Periode: ${periodeLabel}`,M,25);
+  doc.text(`Diekspor: ${todayStr}`,M,31);
+
+  let y=48;
+
+  function sectionTitle(title,color=[45,106,79]){
+    doc.setFillColor(...color);
+    doc.roundedRect(M,y,182,8,2,2,'F');
+    doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+    doc.text(title,M+4,y+5.5);
+    y+=12;
+  }
+
+  function statBox(label,value,x,bw,color=[212,243,220]){
+    doc.setFillColor(...color);
+    doc.roundedRect(x,y,bw,16,2,2,'F');
+    doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(45,106,79);
+    doc.text(String(value),x+bw/2,y+9,{align:'center'});
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(74,103,65);
+    doc.text(label,x+bw/2,y+14,{align:'center'});
+  }
+
+  function progressRow(label,done,total,color=[64,145,108]){
+    if(y>270){doc.addPage();y=18;}
+    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(30,46,30);
+    doc.text(label,M,y+4);
+    const pct=total>0?Math.round((done/total)*100):0;
+    doc.setFontSize(8);doc.setTextColor(100);
+    doc.text(`${done}/${total} (${pct}%)`,196,y+4,{align:'right'});
+    // track
+    doc.setFillColor(212,243,220);
+    doc.roundedRect(M,y+6,182,4,1,1,'F');
+    if(pct>0){
+      doc.setFillColor(...color);
+      doc.roundedRect(M,y+6,182*(pct/100),4,1,1,'F');
+    }
+    y+=14;
+  }
+
+  function checkPage(){if(y>270){doc.addPage();y=18;}}
+
+  // ── KHATAM ──
+  sectionTitle('⭐  Progress Khatam Al-Quran');
+  const cur=data.khatam.currentSurat;
+  const kpct=Math.round((cur/114)*100);
+  statBox('Posisi surat',cur,M,58,[212,243,220]);
+  statBox('% Khatam',kpct+'%',M+62,58,[212,243,220]);
+  statBox('Total khatam',data.khatam.history.length+'x',M+124,58,[253,243,208]);
+  y+=20;
+  // bar khatam
+  doc.setFillColor(212,243,220);doc.roundedRect(M,y,182,6,2,2,'F');
+  doc.setFillColor(45,106,79);doc.roundedRect(M,y,182*(kpct/100),6,2,2,'F');
+  y+=10;
+  doc.setFontSize(8);doc.setFont('helvetica','italic');doc.setTextColor(100);
+  doc.text(`Posisi terakhir: ${SURAT_LIST[cur-1].nama} (surat ke-${cur} dari 114)`,M,y);
+  y+=10;checkPage();
+
+  // ── TILAWAH ──
+  sectionTitle('📖  Tilawah Al-Quran');
+  const tilList=data.tilawah.filter(t=>days.some(d=>dateStr(d)===t.date));
+  const totalLembar=tilList.reduce((s,t)=>s+(t.lembar||0),0);
+  const hariTilawah=new Set(tilList.map(t=>t.date)).size;
+  statBox('Hari tilawah',`${hariTilawah}/${totalDays}`,M,88,[212,243,220]);
+  statBox('Total lembar',totalLembar,M+94,88,[253,243,208]);
+  y+=20;
+  if(tilList.length>0){
+    doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(45,106,79);
+    doc.text('Riwayat:',M,y);y+=5;
+    doc.setFont('helvetica','normal');doc.setTextColor(60);
+    tilList.slice(0,15).forEach(t=>{
+      checkPage();
+      const range=t.suratMulaiNama&&t.suratSelesaiNama
+        ?`${t.suratMulaiNama}${t.ayatMulai?' ('+t.ayatMulai+')':''} → ${t.suratSelesaiNama}${t.ayatSelesai?' ('+t.ayatSelesai+')':''}`
+        :t.suratMulaiNama||'Tilawah';
+      const line=`  • ${t.dateLabel.replace(/^Hari ini, |^Kemarin, |^Besok, /,'')} : ${range} — Hal ${t.halMulai||'?'}–${t.halSelesai||'?'} (${t.lembar||0} lembar)`;
+      const lines=doc.splitTextToSize(line,175);
+      doc.text(lines,M,y);y+=lines.length*5;
+    });
+  }
+  y+=4;checkPage();
+
+  // ── WAJIB ──
+  sectionTitle('🕌  Shalat Wajib Berjamaah',[45,106,79]);
+  const wStats={};WAJIB.forEach(s=>wStats[s.id]={name:s.name,done:0});
+  days.forEach(d=>{const k=dateKey(d);const log=data.shalat[k]||{};WAJIB.forEach(s=>{if(log[s.id])wStats[s.id].done++;});});
+  WAJIB.forEach(s=>{progressRow(s.name,wStats[s.id].done,totalDays,[64,145,108]);});
+  y+=2;checkPage();
+
+  // ── SUNNAH ──
+  sectionTitle('✨  Shalat Sunnah',[183,147,76]);
+  const sStats={};SUNNAH.forEach(s=>sStats[s.id]={name:s.name,done:0});
+  days.forEach(d=>{const k=dateKey(d);const log=data.shalat[k]||{};SUNNAH.forEach(s=>{if(log[s.id])sStats[s.id].done++;});});
+  SUNNAH.forEach(s=>{progressRow(s.name,sStats[s.id].done,totalDays,[183,147,76]);});
+
+  // FOOTER
+  const pageCount=doc.getNumberOfPages();
+  for(let i=1;i<=pageCount;i++){
+    doc.setPage(i);
+    doc.setFontSize(8);doc.setTextColor(180);
+    doc.text(`Catatan Ibadah Harianku — ${periodeLabel} — Hal ${i}/${pageCount}`,105,292,{align:'center'});
+  }
+
+  const fn=rekapPeriod==='bulanan'
+    ?`ibadah-${MONTHS[rekapDate.getMonth()].toLowerCase()}-${rekapDate.getFullYear()}.pdf`
+    :`ibadah-minggu-${dateStr(getWeekStart(rekapDate))}.pdf`;
+  doc.save(fn);
+}
+
+// Init
+fillSuratDropdowns();
+document.getElementById('headerDate').textContent=formatDate(new Date());
+renderShalat();
+renderTilawahHeader();
+renderTilawahList();
+</script>
+</body>
+</html>
