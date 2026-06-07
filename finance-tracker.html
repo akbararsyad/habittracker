@@ -205,6 +205,14 @@ select option{background:var(--bg3);}
 
 .cat2-group{margin-bottom:10px;}
 .cat2-title{font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px;}
+.saldo-table{width:100%;border-collapse:collapse;font-size:12px;}
+.saldo-table th{background:var(--bg3);color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;font-size:10px;padding:8px 10px;text-align:left;font-weight:600;}
+.saldo-table td{padding:9px 10px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle;}
+.saldo-table tr:last-child td{border-bottom:none;}
+.saldo-table .month-col{color:var(--text2);font-weight:500;}
+.saldo-table .positive{color:var(--green);}
+.saldo-table .negative{color:var(--red);}
+.saldo-table .neutral{color:var(--text3);}
 </style>
 </head>
 <body>
@@ -377,6 +385,11 @@ select option{background:var(--bg3);}
       <div id="breakdownCat2"></div>
     </div>
 
+    <div class="card">
+      <div class="chart-title">Breakdown Expense per Cat 3</div>
+      <div id="breakdownCat3"></div>
+    </div>
+
     <!-- Chart pie cat2 -->
     <div class="chart-wrap">
       <div class="chart-title">Komposisi Expense</div>
@@ -391,27 +404,66 @@ select option{background:var(--bg3);}
   <!-- TAB: SALDO & TABUNGAN -->
   <div id="tab-saldo" class="tab-content">
 
-    <!-- ALOKASI SALDO -->
-    <div class="section-lbl">💳 Alokasi Saldo</div>
-    <div class="saldo-card" style="margin-bottom:12px">
-      <div class="saldo-label">Saldo Kas Tersedia</div>
-      <div class="saldo-val" id="saldoKasVal">Rp 0</div>
-      <div class="saldo-sub">Saldo awal + income − expense − transfer</div>
+    <!-- RINGKASAN SALDO BULANAN -->
+    <div class="section-lbl">💳 Ringkasan Saldo Bulanan</div>
+    <div id="saldoBulananTable" style="margin-bottom:12px"></div>
+    <div class="card" style="margin-bottom:16px;text-align:center">
+      <div class="sum-label" style="margin-bottom:6px">Total Saldo Belum Teralokasi</div>
+      <div class="saldo-val" style="font-size:26px" id="totalBelumTeralokasi">Rp 0</div>
     </div>
 
+    <!-- FORM ALOKASI -->
     <div class="card">
       <div class="section-lbl" style="margin-top:0">Catat Alokasi Saldo</div>
-      <div class="form-section">
-        <label class="form-label">Tanggal</label>
-        <input type="date" id="alokasiDate"/>
+      <div class="form-row">
+        <div class="form-section">
+          <label class="form-label">Bulan Saldo</label>
+          <select id="alokasiMonthSrc">
+            <option value="">Pilih bulan</option>
+          </select>
+        </div>
+        <div class="form-section">
+          <label class="form-label">Tanggal</label>
+          <input type="date" id="alokasiDate"/>
+        </div>
       </div>
       <div class="form-section">
         <label class="form-label">Jumlah (Rp)</label>
         <input type="number" id="alokasiAmount" placeholder="0"/>
       </div>
       <div class="form-section">
-        <label class="form-label">Keterangan</label>
-        <input type="text" id="alokasiDesc" placeholder="cth: Beli baju lebaran (tidak masuk expense bulanan)"/>
+        <label class="form-label">Detail Alokasi</label>
+        <input type="text" id="alokasiDesc" placeholder="cth: Beli baju lebaran, Servis motor..."/>
+      </div>
+      <div class="form-section">
+        <label class="form-label">Kategori 1</label>
+        <select id="alokasiCat1" onchange="updateAlokasiCat2()">
+          <option value="">Pilih tipe</option>
+          <option value="Needs">Needs</option>
+          <option value="Wants">Wants</option>
+          <option value="Savings">Savings</option>
+          <option value="Goods">Goods</option>
+          <option value="Loss">Loss</option>
+        </select>
+      </div>
+      <div class="form-section" id="alokasiCat2Section" style="display:none">
+        <label class="form-label">Kategori 2</label>
+        <select id="alokasiCat2" onchange="updateAlokasiCat3()">
+          <option value="">Pilih kelompok</option>
+          <option value="Living">Living</option>
+          <option value="Lifestyle">Lifestyle</option>
+          <option value="Leisure">Leisure</option>
+          <option value="Growth">Growth</option>
+          <option value="Giving">Giving</option>
+          <option value="Wealth">Wealth</option>
+          <option value="Misc">Misc</option>
+        </select>
+      </div>
+      <div class="form-section" id="alokasiCat3Section" style="display:none">
+        <label class="form-label">Kategori 3</label>
+        <select id="alokasiCat3">
+          <option value="">Pilih detail</option>
+        </select>
       </div>
       <button class="save-btn" onclick="saveAlokasi()">Simpan Alokasi</button>
     </div>
@@ -791,7 +843,7 @@ function renderAnalisis(){
   document.getElementById('analisisNavLabel').textContent=navLabelText;
 
   const txList=getAnalisisTx();
-  const {income,expense,net}=calcSummary(txList);
+  const {income,expense,transfer,net}=calcSummary(txList);
 
   document.getElementById('analisisSummary').innerHTML=`
     <div class="sum-card"><div class="sum-label">Income</div><div class="sum-val green">${fmtRp(income)}</div></div>
@@ -808,30 +860,16 @@ function renderAnalisis(){
   const totalExp=expTx.reduce((s,t)=>s+t.amount,0);
   const cat1Map={};
   expTx.forEach(t=>{const c=t.cat1||'Lain-lain';cat1Map[c]=(cat1Map[c]||0)+t.amount;});
-  document.getElementById('breakdownCat1').innerHTML=Object.entries(cat1Map)
-    .sort((a,b)=>b[1]-a[1])
-    .map(([k,v])=>{
-      const pct=totalExp>0?Math.round((v/totalExp)*100):0;
-      const color=CAT_COLORS[k]||'#94a3b8';
-      return `<div class="breakdown-item">
-        <div class="breakdown-dot" style="background:${color}"></div>
-        <div style="flex:1">
-          <div style="display:flex;justify-content:space-between">
-            <span class="breakdown-label">${k}</span>
-            <span class="breakdown-val">${fmtRp(v)}<span class="breakdown-pct">${pct}%</span></span>
-          </div>
-          <div class="breakdown-bar-wrap"><div class="breakdown-bar-fill" style="width:${pct}%;background:${color}"></div></div>
-        </div>
-      </div>`;
-    }).join('')||'<div style="color:var(--text3);font-size:13px;padding:8px 0">Belum ada data expense.</div>';
+  document.getElementById('breakdownCat1').innerHTML=breakdownHTML(cat1Map,totalExp);
 
   // Breakdown cat2
   const cat2Map={};
   expTx.forEach(t=>{const c=(t.cat2||t.cat1||'Lain-lain');cat2Map[c]=(cat2Map[c]||0)+t.amount;});
-  document.getElementById('breakdownCat2').innerHTML=Object.entries(cat2Map)
-    .sort((a,b)=>b[1]-a[1])
-    .map(([k,v])=>{
-      const pct=totalExp>0?Math.round((v/totalExp)*100):0;
+
+  function breakdownHTML(map,totalAmt){
+    if(!Object.keys(map).length) return '<div style="color:var(--text3);font-size:13px;padding:8px 0">Belum ada data expense.</div>';
+    return Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+      const pct=totalAmt>0?Math.round((v/totalAmt)*100):0;
       const color=CAT_COLORS[k]||'#94a3b8';
       return `<div class="breakdown-item">
         <div class="breakdown-dot" style="background:${color}"></div>
@@ -843,7 +881,15 @@ function renderAnalisis(){
           <div class="breakdown-bar-wrap"><div class="breakdown-bar-fill" style="width:${pct}%;background:${color}"></div></div>
         </div>
       </div>`;
-    }).join('')||'<div style="color:var(--text3);font-size:13px;padding:8px 0">Belum ada data expense.</div>';
+    }).join('');
+  }
+
+  document.getElementById('breakdownCat2').innerHTML=breakdownHTML(cat2Map,totalExp);
+
+  // Breakdown cat3
+  const cat3Map={};
+  expTx.forEach(t=>{const c=(t.cat3||t.cat2||t.cat1||'Lain-lain');cat3Map[c]=(cat3Map[c]||0)+t.amount;});
+  document.getElementById('breakdownCat3').innerHTML=breakdownHTML(cat3Map,totalExp);
 
   // Pie chart
   renderPieChart(cat1Map);
@@ -932,26 +978,25 @@ function exportPDF(){
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF();
   const txList=getAnalisisTx();
-  const {income,expense,net}=calcSummary(txList);
+  const {income,expense,transfer,net}=calcSummary(txList);
   const y=analisisDate.getFullYear(),m=analisisDate.getMonth();
   const periodeLabel=analisisPeriod==='bulanan'?`${MONTHS[m]} ${y}`:String(y);
   const todayStr=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
   const totalExp=txList.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
 
-  // Header
-  doc.setFillColor(15,15,14);doc.rect(0,0,210,40,'F');
-  doc.setFillColor(245,200,66);doc.rect(0,37,210,3,'F');
-  doc.setFontSize(20);doc.setFont('helvetica','bold');doc.setTextColor(240,239,232);
-  doc.text('Finance Tracker',14,18);
-  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(160,160,144);
-  doc.text(`Periode: ${periodeLabel}`,14,27);
-  doc.text(`Diekspor: ${todayStr}`,14,33);
+  // Header — putih bersih dengan aksen hijau
+  doc.setFillColor(45,106,79);doc.rect(0,0,210,36,'F');
+  doc.setFontSize(20);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+  doc.text('Finance Tracker',14,16);
+  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(200,230,210);
+  doc.text(`Periode: ${periodeLabel}`,14,24);
+  doc.text(`Diekspor: ${todayStr}`,14,31);
 
   let yp=50;
 
   function secTitle(title){
-    doc.setFillColor(30,30,28);doc.roundedRect(14,yp,182,9,2,2,'F');
-    doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(245,200,66);
+    doc.setFillColor(45,106,79);doc.roundedRect(14,yp,182,9,2,2,'F');
+    doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
     doc.text(title,18,yp+6.5);yp+=14;
   }
 
@@ -962,7 +1007,7 @@ function exportPDF(){
       doc.setFillColor(...item.bg);doc.roundedRect(x,yp,bw,18,2,2,'F');
       doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(...item.color);
       doc.text(item.val,x+bw/2,yp+10,{align:'center'});
-      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(100,100,90);
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
       doc.text(item.label,x+bw/2,yp+15,{align:'center'});
     });
     yp+=24;
@@ -973,9 +1018,9 @@ function exportPDF(){
   // RINGKASAN
   secTitle('RINGKASAN KEUANGAN');
   statBoxes([
-    {label:'Income',val:fmtRp(income),bg:[20,50,30],color:[74,222,128]},
-    {label:'Expense',val:fmtRp(expense),bg:[50,20,20],color:[248,113,113]},
-    {label:'Net',val:fmtRp(net),bg:net>=0?[20,50,30]:[50,20,20],color:net>=0?[74,222,128]:[248,113,113]},
+    {label:'Income',val:fmtRp(income),bg:[212,243,220],color:[30,100,50]},
+    {label:'Expense',val:fmtRp(expense),bg:[254,226,226],color:[180,40,40]},
+    {label:'Net',val:fmtRp(net),bg:net>=0?[212,243,220]:[254,226,226],color:net>=0?[30,100,50]:[180,40,40]},
   ]);
   checkPage();
 
@@ -996,11 +1041,11 @@ function exportPDF(){
   Object.entries(cat1Map).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
     checkPage();
     const pct=totalExp>0?Math.round((v/totalExp)*100):0;
-    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(50);
+    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(30,70,50);
     doc.text(k,14,yp+4);
-    doc.setFont('helvetica','normal');doc.setTextColor(80);
+    doc.setFont('helvetica','normal');doc.setTextColor(60,60,60);
     doc.text(`${fmtRp(v)} (${pct}%)`,196,yp+4,{align:'right'});
-    doc.setFillColor(30,30,28);doc.roundedRect(14,yp+6,182,4,1,1,'F');
+    doc.setFillColor(220,240,228);doc.roundedRect(14,yp+6,182,4,1,1,'F');
     const colorHex=CAT_COLORS[k]||'#94a3b8';
     const r=parseInt(colorHex.slice(1,3),16),g=parseInt(colorHex.slice(3,5),16),b=parseInt(colorHex.slice(5,7),16);
     doc.setFillColor(r,g,b);if(pct>0)doc.roundedRect(14,yp+6,182*(pct/100),4,1,1,'F');
@@ -1011,25 +1056,25 @@ function exportPDF(){
 
   // RIWAYAT TRANSAKSI
   secTitle('RIWAYAT TRANSAKSI');
-  doc.setFillColor(30,30,28);doc.rect(14,yp,182,7,'F');
-  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(160,160,100);
+  doc.setFillColor(45,106,79);doc.rect(14,yp,182,7,'F');
+  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
   doc.text('Tanggal',16,yp+5);doc.text('Deskripsi',48,yp+5);doc.text('Kategori',118,yp+5);doc.text('Jumlah',196,yp+5,{align:'right'});
   yp+=9;
 
   txList.slice(0,50).forEach((t,i)=>{
     checkPage();
-    if(i%2===0){doc.setFillColor(22,22,20);doc.rect(14,yp-1,182,8,'F');}
-    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(180,180,170);
+    if(i%2===0){doc.setFillColor(245,250,247);doc.rect(14,yp-1,182,8,'F');}
+    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(50,50,50);
     doc.text(t.date,16,yp+4);
     const desc=(t.desc||'').substring(0,30);
     doc.text(desc,48,yp+4);
     const cat=t.type==='income'?(t.incomeType||'Income'):t.type==='expense'?(t.cat1||'Expense'):'Transfer';
     doc.text(cat.substring(0,20),118,yp+4);
     const sign=t.type==='income'?'+':t.type==='expense'?'-':'';
-    const amtColor=t.type==='income'?[74,222,128]:t.type==='expense'?[248,113,113]:[245,200,66];
+    const amtColor=t.type==='income'?[30,100,50]:t.type==='expense'?[180,40,40]:[160,120,0];
     doc.setTextColor(...amtColor);doc.setFont('helvetica','bold');
     doc.text(sign+fmtRp(t.amount),196,yp+4,{align:'right'});
-    doc.setDrawColor(30,30,28);doc.line(14,yp+7,196,yp+7);
+    doc.setDrawColor(200,220,210);doc.line(14,yp+7,196,yp+7);
     yp+=9;
   });
 
@@ -1037,8 +1082,8 @@ function exportPDF(){
   const pageCount=doc.getNumberOfPages();
   for(let i=1;i<=pageCount;i++){
     doc.setPage(i);
-    doc.setFillColor(15,15,14);doc.rect(0,288,210,10,'F');
-    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(80,80,70);
+    doc.setFillColor(45,106,79);doc.rect(0,289,210,8,'F');
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(200,230,210);
     doc.text(`Finance Tracker — ${periodeLabel} — Hal ${i}/${pageCount}`,105,294,{align:'center'});
   }
 
@@ -1060,16 +1105,61 @@ function setTabType(t){
 document.getElementById('alokasiDate').value=new Date().toISOString().split('T')[0];
 document.getElementById('tabunganDate').value=new Date().toISOString().split('T')[0];
 
+// Isi dropdown bulan saldo (dari transaksi yang ada)
+function fillAlokasiMonths(){
+  const months=new Set();
+  const now=new Date();
+  // Tambah 12 bulan terakhir
+  for(let i=11;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  const sel=document.getElementById('alokasiMonthSrc');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Pilih bulan</option>'+
+    [...months].map(m=>{
+      const [y,mo]=m.split('-');
+      return `<option value="${m}">${MONTHS[parseInt(mo)-1]} ${y}</option>`;
+    }).join('');
+  if(cur) sel.value=cur;
+}
+
+function updateAlokasiCat2(){
+  const cat1=document.getElementById('alokasiCat1').value;
+  document.getElementById('alokasiCat2Section').style.display=cat1?'':'none';
+  document.getElementById('alokasiCat3Section').style.display='none';
+  document.getElementById('alokasiCat2').value='';
+}
+
+function updateAlokasiCat3(){
+  const cat2=document.getElementById('alokasiCat2').value;
+  const cat3El=document.getElementById('alokasiCat3');
+  const cat3Sec=document.getElementById('alokasiCat3Section');
+  if(!cat2){cat3Sec.style.display='none';return;}
+  const items=CAT2_TO_CAT3[cat2]||[];
+  cat3El.innerHTML='<option value="">Pilih detail</option>'+items.map(i=>`<option value="${i}">${i}</option>`).join('');
+  cat3Sec.style.display='';
+}
+
 function saveAlokasi(){
   const date=document.getElementById('alokasiDate').value;
+  const monthSrc=document.getElementById('alokasiMonthSrc').value;
   const amount=parseFloat(document.getElementById('alokasiAmount').value)||0;
   const desc=document.getElementById('alokasiDesc').value.trim();
+  const cat1=document.getElementById('alokasiCat1').value;
+  const cat2=document.getElementById('alokasiCat2').value;
+  const cat3=document.getElementById('alokasiCat3').value;
   if(!date||!amount){alert('Isi tanggal dan jumlah ya!');return;}
-  data.alokasi.push({id:Date.now(),date,amount,desc});
+  data.alokasi.push({id:Date.now(),date,monthSrc,amount,desc,cat1,cat2,cat3});
   data.alokasi.sort((a,b)=>b.date.localeCompare(a.date));
   save();
   document.getElementById('alokasiAmount').value='';
   document.getElementById('alokasiDesc').value='';
+  document.getElementById('alokasiCat1').value='';
+  document.getElementById('alokasiCat2').value='';
+  document.getElementById('alokasiCat3').value='';
+  document.getElementById('alokasiCat2Section').style.display='none';
+  document.getElementById('alokasiCat3Section').style.display='none';
   renderSaldo();
 }
 
@@ -1100,32 +1190,82 @@ function deleteTabungan(id){
   save();renderSaldo();
 }
 
-function renderSaldo(){
-  // Saldo kas
+function getSaldoAkhirBulan(y,m){
+  // Saldo akhir bulan = saldo awal + semua income - semua expense - transfer s.d bulan itu
   const all=data.transactions;
-  const totalIncome=all.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const totalExpense=all.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  const totalTransfer=all.filter(t=>t.type==='transfer').reduce((s,t)=>s+t.amount,0);
+  const endStr=`${y}-${String(m+1).padStart(2,'0')}-31`;
+  const filtered=all.filter(t=>t.date<=endStr);
+  const inc=filtered.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=filtered.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const trn=filtered.filter(t=>t.type==='transfer').reduce((s,t)=>s+t.amount,0);
+  return (data.saldoAwal||0)+inc-exp-trn;
+}
+
+function getAlokasiForMonth(monthStr){
+  return data.alokasi.filter(a=>a.monthSrc===monthStr).reduce((s,a)=>s+a.amount,0);
+}
+
+function renderSaldo(){
+  fillAlokasiMonths();
+  const now=new Date();
+
+  // Tabel ringkasan per bulan (12 bulan berjalan)
+  let totalBelumTeralokasi=0;
+  const rows=[];
+  for(let i=0;i<12;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-11+i,1);
+    const y=d.getFullYear(),m=d.getMonth();
+    const monthStr=`${y}-${String(m+1).padStart(2,'0')}`;
+    const saldoAkhir=getSaldoAkhirBulan(y,m);
+    const teralokasi=getAlokasiForMonth(monthStr);
+    const belumTeralokasi=saldoAkhir-teralokasi;
+    totalBelumTeralokasi=belumTeralokasi; // ambil bulan terakhir sebagai total
+    const saldoClass=saldoAkhir<0?'negative':saldoAkhir>0?'positive':'neutral';
+    const belumClass=belumTeralokasi<0?'negative':belumTeralokasi>0?'positive':'neutral';
+    rows.push(`<tr>
+      <td class="month-col">${MONTHS[m]}</td>
+      <td class="${saldoClass}">${fmtRp(saldoAkhir)}</td>
+      <td class="${belumClass}">${fmtRp(belumTeralokasi)}</td>
+      <td class="positive">${fmtRp(teralokasi)}</td>
+    </tr>`);
+  }
+
+  // Hitung total belum teralokasi (saldo akhir bulan ini - total alokasi semua)
+  const saldoAkhirNow=getSaldoAkhirBulan(now.getFullYear(),now.getMonth());
   const totalAlokasi=data.alokasi.reduce((s,a)=>s+a.amount,0);
-  const saldoKas=(data.saldoAwal||0)+totalIncome-totalExpense-totalTransfer-totalAlokasi;
-  document.getElementById('saldoKasVal').textContent=fmtRp(saldoKas);
-  document.getElementById('saldoKasVal').style.color=saldoKas<0?'var(--red)':'var(--text)';
+  const totalBelum=saldoAkhirNow-totalAlokasi;
+
+  document.getElementById('saldoBulananTable').innerHTML=`
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="saldo-table">
+        <thead><tr>
+          <th>Bulan</th><th>Saldo Akhir</th><th>Belum Teralokasi</th><th>Teralokasi</th>
+        </tr></thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>
+    </div>`;
+
+  document.getElementById('totalBelumTeralokasi').textContent=fmtRp(totalBelum);
+  document.getElementById('totalBelumTeralokasi').style.color=totalBelum<0?'var(--red)':totalBelum>0?'var(--green)':'var(--text)';
 
   // Alokasi list
   const ael=document.getElementById('alokasiList');
   if(!data.alokasi.length){
     ael.innerHTML=`<div class="empty-state"><span class="empty-icon">📋</span>Belum ada alokasi saldo.</div>`;
   } else {
-    ael.innerHTML=data.alokasi.map(a=>`
-      <div class="tx-item">
+    ael.innerHTML=data.alokasi.map(a=>{
+      const bulanLabel=a.monthSrc?MONTHS[parseInt(a.monthSrc.split('-')[1])-1]+' '+a.monthSrc.split('-')[0]:'';
+      const catLabel=[a.cat1,a.cat2,a.cat3].filter(Boolean).join(' › ');
+      return `<div class="tx-item">
         <div class="tx-icon expense">↓</div>
         <div class="tx-info">
-          <div class="tx-desc">${a.desc||'Alokasi'}</div>
-          <div class="tx-cat">${a.date}</div>
+          <div class="tx-desc">${a.desc||'Alokasi'}${catLabel?' · '+catLabel:''}</div>
+          <div class="tx-cat">${a.date}${bulanLabel?' · Saldo '+bulanLabel:''}</div>
         </div>
         <div class="tx-amount expense">-${fmtRp(a.amount)}</div>
         <button class="tx-del" onclick="deleteAlokasi(${a.id})">✕</button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   // Tabungan summary per pos
