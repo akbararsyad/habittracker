@@ -726,11 +726,27 @@ function renderDashboard(){
   const now=new Date();
   const y=now.getFullYear(),m=now.getMonth();
   const monthTx=all.filter(t=>{const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m;});
-  const {income,expense,net}=calcSummary(monthTx);
+  const {income:incMonth,expense:expMonth,net:netMonth}=calcSummary(monthTx);
+
+  // Summary semua waktu
+  const {income:incAll,expense:expAll,transfer:trnAll,net:netAll}=calcSummary(all);
+
   document.getElementById('summaryGrid').innerHTML=`
-    <div class="sum-card"><div class="sum-label">Income</div><div class="sum-val green">${fmtRp(income)}</div></div>
-    <div class="sum-card"><div class="sum-label">Expense</div><div class="sum-val red">${fmtRp(expense)}</div></div>
-    <div class="sum-card"><div class="sum-label">Net</div><div class="sum-val ${net>=0?'green':'red'}">${fmtRp(net)}</div></div>
+    <div class="sum-card">
+      <div class="sum-label">Income</div>
+      <div class="sum-val green">${fmtRp(incAll)}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:3px">Bulan ini: ${fmtRp(incMonth)}</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Expense</div>
+      <div class="sum-val red">${fmtRp(expAll)}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:3px">Bulan ini: ${fmtRp(expMonth)}</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Net</div>
+      <div class="sum-val ${netAll>=0?'green':'red'}">${fmtRp(netAll)}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:3px">Bulan ini: ${fmtRp(netMonth)}</div>
+    </div>
   `;
 
   // Recent transactions (10 terbaru)
