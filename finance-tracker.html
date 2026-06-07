@@ -514,7 +514,7 @@ const CAT_COLORS={
 let currentType='income';
 let txMonthDate=new Date();
 let analisisDate=new Date();
-let analisisPeriod='bulanan';
+let analisisPeriod='mingguan';
 let chartInstances={};
 
 let data={
@@ -740,13 +740,17 @@ function setAnalisisPeriod(p){
 }
 
 function getWeekStart(d){
-  const day=d.getDay();
-  const diff=day===0?-6:1-day;
-  const s=new Date(d);s.setDate(d.getDate()+diff);s.setHours(0,0,0,0);
+  const day=d.getDay(); // 0=Ahad
+  const diff=day===0?-6:1-day; // geser ke Senin
+  const s=new Date(d.getFullYear(),d.getMonth(),d.getDate()+diff);
   return s;
 }
 function getWeekEnd(d){
-  const s=getWeekStart(d);const e=new Date(s);e.setDate(s.getDate()+6);return e;
+  const s=getWeekStart(d);
+  return new Date(s.getFullYear(),s.getMonth(),s.getDate()+6);
+}
+function toDateStr(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function weekLabel(d){
   const s=getWeekStart(d);const e=getWeekEnd(d);
@@ -766,10 +770,10 @@ function getAnalisisTx(){
   if(analisisPeriod==='mingguan'){
     const start=getWeekStart(analisisDate);
     const end=getWeekEnd(analisisDate);
-    return data.transactions.filter(t=>{
-      const d=new Date(t.date);
-      return d>=start&&d<=end;
-    });
+    // Bandingkan pakai string agar tidak ada timezone issue
+    const startStr=toDateStr(start);
+    const endStr=toDateStr(end);
+    return data.transactions.filter(t=>t.date>=startStr&&t.date<=endStr);
   } else if(analisisPeriod==='bulanan'){
     return data.transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m;});
   } else {
@@ -779,9 +783,12 @@ function getAnalisisTx(){
 
 function renderAnalisis(){
   const y=analisisDate.getFullYear(),m=analisisDate.getMonth();
-  document.getElementById('analisisNavLabel').textContent=
-    analisisPeriod==='mingguan'?weekLabel(analisisDate):
-    analisisPeriod==='bulanan'?`${MONTHS[m]} ${y}`:String(y);
+  const navLabelText=analisisPeriod==='mingguan'
+    ?weekLabel(analisisDate)
+    :analisisPeriod==='bulanan'
+    ?`${MONTHS[m]} ${y}`
+    :String(y);
+  document.getElementById('analisisNavLabel').textContent=navLabelText;
 
   const txList=getAnalisisTx();
   const {income,expense,net}=calcSummary(txList);
@@ -849,17 +856,21 @@ function renderIvsEChart(txList,y,m){
   if(analisisPeriod==='mingguan'){
     const DAYNAMES=['Sen','Sel','Rab','Kam','Jum','Sab','Ahad'];
     const start=getWeekStart(analisisDate);
+    // Buat array tanggal string untuk 7 hari (Senin-Ahad)
+    const weekDates=Array.from({length:7},(_,i)=>{
+      const d=new Date(start);
+      d.setDate(start.getDate()+i);
+      // Gunakan format YYYY-MM-DD lokal bukan UTC
+      const yy=d.getFullYear();
+      const mm=String(d.getMonth()+1).padStart(2,'0');
+      const dd=String(d.getDate()).padStart(2,'0');
+      return `${yy}-${mm}-${dd}`;
+    });
     labels=DAYNAMES;
-    incomeData=Array.from({length:7},(_,i)=>{
-      const d=new Date(start);d.setDate(start.getDate()+i);
-      const ds=d.toISOString().split('T')[0];
-      return txList.filter(t=>t.type==='income'&&t.date===ds).reduce((s,t)=>s+t.amount,0);
-    });
-    expenseData=Array.from({length:7},(_,i)=>{
-      const d=new Date(start);d.setDate(start.getDate()+i);
-      const ds=d.toISOString().split('T')[0];
-      return txList.filter(t=>t.type==='expense'&&t.date===ds).reduce((s,t)=>s+t.amount,0);
-    });
+    incomeData=weekDates.map(ds=>
+      txList.filter(t=>t.type==='income'&&t.date===ds).reduce((s,t)=>s+t.amount,0));
+    expenseData=weekDates.map(ds=>
+      txList.filter(t=>t.type==='expense'&&t.date===ds).reduce((s,t)=>s+t.amount,0));
   } else if(analisisPeriod==='bulanan'){
     const days=new Date(y,m+1,0).getDate();
     labels=Array.from({length:days},(_,i)=>i+1);
