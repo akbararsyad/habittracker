@@ -1207,14 +1207,15 @@ function deleteTabungan(id){
 }
 
 function getSaldoAkhirBulan(y,m){
-  // Saldo akhir bulan = saldo awal + semua income - semua expense - transfer s.d bulan itu
+  // Saldo akhir bulan = income - expense - transfer bulan itu saja (bukan kumulatif)
   const all=data.transactions;
+  const startStr=`${y}-${String(m+1).padStart(2,'0')}-01`;
   const endStr=`${y}-${String(m+1).padStart(2,'0')}-31`;
-  const filtered=all.filter(t=>t.date<=endStr);
+  const filtered=all.filter(t=>t.date>=startStr&&t.date<=endStr);
   const inc=filtered.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const exp=filtered.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
   const trn=filtered.filter(t=>t.type==='transfer').reduce((s,t)=>s+t.amount,0);
-  return (data.saldoAwal||0)+inc-exp-trn;
+  return inc-exp-trn;
 }
 
 function getAlokasiForMonth(monthStr){
