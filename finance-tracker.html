@@ -271,14 +271,15 @@ select option{background:var(--bg3);}
             <option value="Secondary|Freelance Lain">Freelance Lain</option>
             <option value="Secondary|Bonus">Bonus</option>
           </optgroup>
+          <optgroup label="Portfolio Income">
+            <option value="Portfolio|Investasi">Investasi</option>
+            <option value="Portfolio|Dividen">Dividen</option>
+            <option value="Portfolio|Return">Return</option>
+          </optgroup>
           <optgroup label="Windfall Income">
             <option value="Windfall|Hadiah">Hadiah</option>
             <option value="Windfall|Cashback">Cashback</option>
             <option value="Windfall|Lainnya">Lainnya</option>
-          </optgroup>
-          <optgroup label="Portfolio Income">
-            <option value="Portfolio|Investasi">Investasi</option>
-            <option value="Portfolio|Dividen">Dividen</option>
           </optgroup>
         </select>
       </div>
@@ -290,6 +291,7 @@ select option{background:var(--bg3);}
           <option value="">Pilih tipe</option>
           <option value="Needs">Needs</option>
           <option value="Wants">Wants</option>
+          <option value="Savings">Savings</option>
           <option value="Goods">Goods</option>
           <option value="Loss">Loss</option>
         </select>
@@ -298,6 +300,13 @@ select option{background:var(--bg3);}
         <label class="form-label">Cat 2 — Kelompok</label>
         <select id="expCat2" onchange="updateCat3()">
           <option value="">Pilih kelompok</option>
+          <option value="Living">Living</option>
+          <option value="Lifestyle">Lifestyle</option>
+          <option value="Leisure">Leisure</option>
+          <option value="Growth">Growth</option>
+          <option value="Giving">Giving</option>
+          <option value="Wealth">Wealth</option>
+          <option value="Misc">Misc</option>
         </select>
       </div>
       <div id="expenseCat3Section" class="form-section" style="display:none">
@@ -308,9 +317,21 @@ select option{background:var(--bg3);}
       </div>
 
       <!-- TRANSFER -->
-      <div id="transferSection" class="form-section" style="display:none">
-        <label class="form-label">Keterangan Transfer</label>
-        <input type="text" id="transferNote" placeholder="cth: Nabung, Bayar hutang..."/>
+      <div id="transferSection" style="display:none">
+        <div class="form-section">
+          <label class="form-label">Tujuan Transfer (Wealth)</label>
+          <select id="transferDest">
+            <option value="">Pilih tujuan</option>
+            <option value="Nest Egg">Nest Egg</option>
+            <option value="Emergency Fund">Emergency Fund</option>
+            <option value="Surprise Fund">Surprise Fund</option>
+            <option value="Investment">Investment</option>
+          </select>
+        </div>
+        <div class="form-section">
+          <label class="form-label">Keterangan (opsional)</label>
+          <input type="text" id="transferNote" placeholder="cth: Nabung bulanan, Top up investasi..."/>
+        </div>
       </div>
 
       <div class="form-section">
@@ -354,7 +375,7 @@ select option{background:var(--bg3);}
     </div>
 
     <!-- Summary -->
-    <div class="summary-grid" id="analisisSummary"></div>
+    <div class="summary-grid" id="analisisSummary" style="grid-template-columns:repeat(4,1fr)"></div>
 
     <!-- Chart income vs expense -->
     <div class="chart-wrap">
@@ -403,26 +424,25 @@ select option{background:var(--bg3);}
 const MONTHS=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const MONTHS_SHORT=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
 
-// Kategori expense 3 level
-const EXP_CATS={
-  Needs:{
-    Living:['Food & Drink','Groceries','Transportation','Bills & Utilities','Rent / Kos','Health & Medicine','Personal Care'],
-    Giving:['Zakat','Infaq / Sedekah','Hadiah','Keluarga'],
-    Wealth:['Tabungan','Investasi','Dana Darurat'],
-  },
-  Wants:{
-    Lifestyle:['Clothing & Fashion','Gadget & Elektronik','Subscriptions','Ngopi / Nongkrong'],
-    Leisure:['Hiburan','Liburan / Travel','Hobi','Buku & Edukasi'],
-    Misc:['Lain-lain'],
-  },
-  Goods:{
-    Growth:['Kursus / Pelatihan','Buku Skill','Alat Kerja'],
-    Misc:['Pembelian Aset','Lain-lain'],
-  },
-  Loss:{
-    Misc:['Denda','Kehilangan','Lain-lain'],
-  }
+// Kategori expense 3 level — Cat2 bebas dipilih, Cat3 mengikuti Cat2
+const CAT2_TO_CAT3={
+  Living:['Food & Drink','Groceries','Health Social Security','Utilities & Stationery','Transportation','Bills','Taxes'],
+  Lifestyle:['Clothing','Personal Care','Gadget'],
+  Leisure:['Entertainment','Vacation'],
+  Growth:['Education','Skill Development','Spiritual'],
+  Giving:['Zakat Infaq Shadaqah','Gift for Parents','Gift for Siblings','Gift for Family','Gift for Others'],
+  Wealth:['Nest Egg','Emergency Fund','Surprise Fund','Investment','Work Expenses'],
+  Misc:['Other Expenses','Unexpected Loss'],
 };
+
+// Cat1 options
+const CAT1_OPTIONS=['Needs','Wants','Savings','Goods','Loss'];
+
+// Cat2 options (semua, tidak terikat cat1)
+const CAT2_OPTIONS=['Living','Lifestyle','Leisure','Growth','Giving','Wealth','Misc'];
+
+// Dummy EXP_CATS untuk kompatibilitas lama
+const EXP_CATS={};
 
 const CAT_COLORS={
   Needs:'#4ade80', Wants:'#60a5fa', Goods:'#f5c842', Loss:'#f87171',
@@ -479,25 +499,22 @@ function setType(t){
 }
 
 function updateCat2(){
+  // Cat2 selalu muncul saat expense dipilih, tidak tergantung cat1
   const cat1=document.getElementById('expCat1').value;
-  const cat2El=document.getElementById('expCat2');
   const cat2Sec=document.getElementById('expenseCat2Section');
   const cat3Sec=document.getElementById('expenseCat3Section');
   if(!cat1){cat2Sec.style.display='none';cat3Sec.style.display='none';return;}
-  const groups=EXP_CATS[cat1]||{};
-  cat2El.innerHTML='<option value="">Pilih kelompok</option>'+
-    Object.keys(groups).map(g=>`<option value="${g}">${g}</option>`).join('');
   cat2Sec.style.display='';
   cat3Sec.style.display='none';
+  document.getElementById('expCat2').value='';
 }
 
 function updateCat3(){
-  const cat1=document.getElementById('expCat1').value;
   const cat2=document.getElementById('expCat2').value;
   const cat3El=document.getElementById('expCat3');
   const cat3Sec=document.getElementById('expenseCat3Section');
-  if(!cat1||!cat2){cat3Sec.style.display='none';return;}
-  const items=(EXP_CATS[cat1]||{})[cat2]||[];
+  if(!cat2){cat3Sec.style.display='none';return;}
+  const items=CAT2_TO_CAT3[cat2]||[];
   cat3El.innerHTML='<option value="">Pilih detail</option>'+
     items.map(i=>`<option value="${i}">${i}</option>`).join('');
   cat3Sec.style.display='';
@@ -522,11 +539,17 @@ function saveTx(){
   }
 
   const transferNote=document.getElementById('transferNote').value.trim();
+  const transferDest=document.getElementById('transferDest').value;
+  if(currentType==='transfer'){
+    cat1='Wealth';
+    cat2='Wealth';
+    cat3=transferDest;
+  }
 
   data.transactions.push({
     id:Date.now(),date,
     type:currentType,amount,desc,note,
-    cat1,cat2,cat3,incomeType,incomeSub,transferNote,
+    cat1,cat2,cat3,incomeType,incomeSub,transferNote,transferDest,
   });
   data.transactions.sort((a,b)=>b.date.localeCompare(a.date));
   save();
@@ -540,6 +563,7 @@ function saveTx(){
   document.getElementById('expenseCat2Section').style.display='none';
   document.getElementById('expenseCat3Section').style.display='none';
   document.getElementById('transferNote').value='';
+  document.getElementById('transferDest').value='';
 
   alert('Transaksi tersimpan!');
   renderDashboard();
@@ -562,8 +586,9 @@ function deleteTx(id){
 function calcSummary(txList){
   const income=txList.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const expense=txList.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  const net=income-expense;
-  return {income,expense,net};
+  const transfer=txList.filter(t=>t.type==='transfer').reduce((s,t)=>s+t.amount,0);
+  const net=income-expense; // transfer tidak masuk hitungan net
+  return {income,expense,transfer,net};
 }
 
 function renderDashboard(){
@@ -571,7 +596,9 @@ function renderDashboard(){
   const all=data.transactions;
   const totalIncome=all.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const totalExpense=all.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  const saldo=(data.saldoAwal||0)+totalIncome-totalExpense;
+  const totalTransfer=all.filter(t=>t.type==='transfer').reduce((s,t)=>s+t.amount,0);
+  // Transfer mengurangi saldo kas (uang pindah ke savings)
+  const saldo=(data.saldoAwal||0)+totalIncome-totalExpense-totalTransfer;
   document.getElementById('saldoVal').textContent=fmtRp(saldo);
   document.getElementById('saldoSub').textContent=`Saldo awal ${fmtRp(data.saldoAwal||0)} + income − expense`;
 
@@ -599,7 +626,7 @@ function txItemHTML(t){
     ?(t.incomeType?t.incomeType+(t.incomeSub?' · '+t.incomeSub:''):'Income')
     :t.type==='expense'
     ?(t.cat1+(t.cat2?' › '+t.cat2:'')+(t.cat3?' › '+t.cat3:''))
-    :(t.transferNote||'Transfer');
+    :('Transfer ke '+(t.transferDest||t.cat3||'Savings')+(t.transferNote?' · '+t.transferNote:''));
   const sign=t.type==='income'?'+':t.type==='expense'?'-':'';
   return `<div class="tx-item">
     <div class="tx-icon ${t.type}">${icon}</div>
@@ -670,6 +697,7 @@ function renderAnalisis(){
   document.getElementById('analisisSummary').innerHTML=`
     <div class="sum-card"><div class="sum-label">Income</div><div class="sum-val green">${fmtRp(income)}</div></div>
     <div class="sum-card"><div class="sum-label">Expense</div><div class="sum-val red">${fmtRp(expense)}</div></div>
+    <div class="sum-card"><div class="sum-label">Transfer</div><div class="sum-val gold">${fmtRp(transfer)}</div></div>
     <div class="sum-card"><div class="sum-label">Net</div><div class="sum-val ${net>=0?'green':'red'}">${fmtRp(net)}</div></div>
   `;
 
