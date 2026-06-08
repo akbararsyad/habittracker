@@ -1104,32 +1104,66 @@ function exportPDF(){
   yp+=4;
 
   // ── RIWAYAT TRANSAKSI ──
-  secTitle('RIWAYAT TRANSAKSI');
-  checkPage(16);
-  doc.setFillColor(45,106,79);doc.rect(M,yp,CW,7,'F');
-  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-  doc.text('Tanggal',M+2,yp+5);
-  doc.text('Deskripsi',M+34,yp+5);
-  doc.text('Kategori',M+112,yp+5);
-  doc.text('Jumlah',M+CW,yp+5,{align:'right'});
-  yp+=9;
+  // Kolom: Tgl | Deskripsi | Tipe | Cat1 | Cat2 | Cat3 | Jumlah
+  // Lebar: 22  | 40        | 15   | 18   | 18   | 22   | 28
+  const C={tgl:M, desc:M+22, tipe:M+62, c1:M+77, c2:M+95, c3:M+113, amt:M+CW};
 
-  txList.forEach((t,i)=>{
+  // Pisah per tipe: income, expense, transfer
+  const incomeTx=txList.filter(t=>t.type==='income');
+  const expenseTx=txList.filter(t=>t.type==='expense');
+  const transferTx=txList.filter(t=>t.type==='transfer');
+
+  function txTableHeader(tipeLabel, color){
+    checkPage(18);
+    doc.setFillColor(...color);doc.rect(M,yp,CW,7,'F');
+    doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+    doc.text('Tanggal',C.tgl+1,yp+5);
+    doc.text('Deskripsi',C.desc+1,yp+5);
+    doc.text('Cat 1',C.c1+1,yp+5);
+    doc.text('Cat 2',C.c2+1,yp+5);
+    doc.text('Cat 3',C.c3+1,yp+5);
+    doc.text('Jumlah',M+CW,yp+5,{align:'right'});
+    yp+=9;
+  }
+
+  function txRow(t, i, sign, amtColor){
     checkPage(10);
     if(i%2===0){doc.setFillColor(245,250,247);doc.rect(M,yp-1,CW,8,'F');}
-    doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(50,50,50);
-    doc.text(t.date,M+2,yp+4);
-    doc.text((t.desc||'').substring(0,38),M+34,yp+4);
-    const cat=t.type==='income'?(t.incomeType?t.incomeType+' Income':'Income')
-      :t.type==='expense'?(t.cat1||'Expense'):'Transfer';
-    doc.text(cat.substring(0,20),M+112,yp+4);
-    const sign=t.type==='income'?'+':t.type==='expense'?'-':'';
-    const amtColor=t.type==='income'?[30,100,50]:t.type==='expense'?[180,40,40]:[160,120,0];
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(50,50,50);
+    doc.text((t.date||''),C.tgl+1,yp+4);
+    doc.text((t.desc||'').substring(0,22),C.desc+1,yp+4);
+    doc.text((t.cat1||t.incomeType||'—').substring(0,10),C.c1+1,yp+4);
+    doc.text((t.cat2||'—').substring(0,10),C.c2+1,yp+4);
+    doc.text((t.cat3||t.transferDest||'—').substring(0,12),C.c3+1,yp+4);
     doc.setTextColor(...amtColor);doc.setFont('helvetica','bold');
     doc.text(sign+fmtRp(t.amount),M+CW,yp+4,{align:'right'});
     doc.setDrawColor(200,220,210);doc.line(M,yp+7,M+CW,yp+7);
     yp+=9;
-  });
+  }
+
+  // Income
+  if(incomeTx.length){
+    secTitle('RIWAYAT INCOME');
+    txTableHeader('Income',[30,100,50]);
+    incomeTx.forEach((t,i)=>txRow(t,i,'+', [30,100,50]));
+    yp+=6;
+  }
+
+  // Expense
+  if(expenseTx.length){
+    secTitle('RIWAYAT EXPENSE');
+    txTableHeader('Expense',[180,40,40]);
+    expenseTx.forEach((t,i)=>txRow(t,i,'-',[180,40,40]));
+    yp+=6;
+  }
+
+  // Transfer
+  if(transferTx.length){
+    secTitle('RIWAYAT TRANSFER');
+    txTableHeader('Transfer',[140,100,20]);
+    transferTx.forEach((t,i)=>txRow(t,i,'',[140,100,20]));
+    yp+=6;
+  }
 
   // Footer
   const pageCount=doc.getNumberOfPages();
