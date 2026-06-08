@@ -875,12 +875,12 @@ function renderAnalisis(){
   const expTx=txList.filter(t=>t.type==='expense');
   const totalExp=expTx.reduce((s,t)=>s+t.amount,0);
   const cat1Map={};
-  expTx.forEach(t=>{const c=t.cat1||'Lain-lain';cat1Map[c]=(cat1Map[c]||0)+t.amount;});
+  expTx.forEach(t=>{const c=t.cat1||'Misc';cat1Map[c]=(cat1Map[c]||0)+t.amount;});
   document.getElementById('breakdownCat1').innerHTML=breakdownHTML(cat1Map,totalExp);
 
   // Breakdown cat2
   const cat2Map={};
-  expTx.forEach(t=>{const c=(t.cat2||t.cat1||'Lain-lain');cat2Map[c]=(cat2Map[c]||0)+t.amount;});
+  expTx.forEach(t=>{const c=(t.cat2||t.cat1||'Misc');cat2Map[c]=(cat2Map[c]||0)+t.amount;});
 
   function breakdownHTML(map,totalAmt){
     if(!Object.keys(map).length) return '<div style="color:var(--text3);font-size:13px;padding:8px 0">Belum ada data expense.</div>';
@@ -904,7 +904,7 @@ function renderAnalisis(){
 
   // Breakdown cat3
   const cat3Map={};
-  expTx.forEach(t=>{const c=(t.cat3||t.cat2||t.cat1||'Lain-lain');cat3Map[c]=(cat3Map[c]||0)+t.amount;});
+  expTx.forEach(t=>{const c=(t.cat3||t.cat2||t.cat1||'Misc');cat3Map[c]=(cat3Map[c]||0)+t.amount;});
   document.getElementById('breakdownCat3').innerHTML=breakdownHTML(cat3Map,totalExp);
 
   // Pie chart
@@ -991,119 +991,191 @@ function renderPieChart(cat1Map){
 
 function exportPDF(){
   if(!window.jspdf){alert('Library PDF belum siap.');return;}
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF();
-  const txList=getAnalisisTx();
-  const {income,expense,transfer,net}=calcSummary(txList);
-  const y=analisisDate.getFullYear(),m=analisisDate.getMonth();
-  const periodeLabel=analisisPeriod==='bulanan'?`${MONTHS[m]} ${y}`:String(y);
-  const todayStr=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
-  const totalExp=txList.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
 
-  // Header — putih bersih dengan aksen hijau
-  doc.setFillColor(45,106,79);doc.rect(0,0,210,36,'F');
-  doc.setFontSize(20);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-  doc.text('Finance Tracker',14,16);
-  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(200,230,210);
-  doc.text(`Periode: ${periodeLabel}`,14,24);
-  doc.text(`Diekspor: ${todayStr}`,14,31);
+  // Pastikan analisis sudah dirender agar chart tersedia
+  renderAnalisis();
 
-  let yp=50;
+  // Tunggu chart render lalu export
+  setTimeout(()=>{
+    const {jsPDF}=window.jspdf;
+    const txList=getAnalisisTx();
+    const {income,expense,transfer,net}=calcSummary(txList);
+    const y=analisisDate.getFullYear(),m=analisisDate.getMonth();
+    const periodeLabel=analisisPeriod==='mingguan'
+      ?weekLabel(analisisDate)
+      :analisisPeriod==='bulanan'
+      ?`${MONTHS[m]} ${y}`:String(y);
+    const todayStr=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+    const totalExp=txList.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
 
-  function secTitle(title){
-    doc.setFillColor(45,106,79);doc.roundedRect(14,yp,182,9,2,2,'F');
-    doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-    doc.text(title,18,yp+6.5);yp+=14;
-  }
+    const doc=new jsPDF();
+    const PW=210, M=14, CW=182;
 
-  function statBoxes(items){
-    const bw=Math.floor(182/items.length)-2;
-    items.forEach((item,i)=>{
-      const x=14+i*(bw+3);
-      doc.setFillColor(...item.bg);doc.roundedRect(x,yp,bw,18,2,2,'F');
-      doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(...item.color);
-      doc.text(item.val,x+bw/2,yp+10,{align:'center'});
-      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
-      doc.text(item.label,x+bw/2,yp+15,{align:'center'});
+    // ── HEADER ──
+    doc.setFillColor(45,106,79);doc.rect(0,0,PW,36,'F');
+    doc.setFontSize(20);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+    doc.text('Finance Tracker',M,16);
+    doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(200,230,210);
+    doc.text(`Periode: ${periodeLabel}`,M,24);
+    doc.text(`Diekspor: ${todayStr}`,M,31);
+
+    let yp=46;
+
+    function secTitle(title){
+      doc.setFillColor(45,106,79);doc.roundedRect(M,yp,CW,9,2,2,'F');
+      doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+      doc.text(title,M+4,yp+6.5);yp+=14;
+    }
+
+    function statBoxes(items){
+      const bw=Math.floor(CW/items.length)-2;
+      items.forEach((item,i)=>{
+        const x=M+i*(bw+3);
+        doc.setFillColor(...item.bg);doc.roundedRect(x,yp,bw,18,2,2,'F');
+        doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(...item.color);
+        doc.text(item.val,x+bw/2,yp+10,{align:'center'});
+        doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
+        doc.text(item.label,x+bw/2,yp+15,{align:'center'});
+      });
+      yp+=24;
+    }
+
+    function progressRow(label,done,total,color){
+      if(yp>268){doc.addPage();yp=18;}
+      doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(30,70,50);
+      doc.text(label,M,yp+4);
+      const pct=total>0?Math.round((done/total)*100):0;
+      doc.setFont('helvetica','normal');doc.setTextColor(60,60,60);
+      doc.text(`${fmtRp(done)} (${pct}%)`,M+CW,yp+4,{align:'right'});
+      doc.setFillColor(220,240,228);doc.roundedRect(M,yp+6,CW,4,1,1,'F');
+      if(pct>0){doc.setFillColor(...color);doc.roundedRect(M,yp+6,CW*(pct/100),4,1,1,'F');}
+      yp+=14;
+    }
+
+    function checkPage(){if(yp>268){doc.addPage();yp=18;}}
+
+    function addChartImage(canvasId, titleStr, h=65){
+      checkPage();
+      const canvas=document.getElementById(canvasId);
+      if(!canvas) return;
+      try{
+        // Buat canvas sementara dengan background putih
+        const tmpCanvas=document.createElement('canvas');
+        tmpCanvas.width=canvas.width;
+        tmpCanvas.height=canvas.height;
+        const ctx=tmpCanvas.getContext('2d');
+        ctx.fillStyle='#ffffff';
+        ctx.fillRect(0,0,tmpCanvas.width,tmpCanvas.height);
+        ctx.drawImage(canvas,0,0);
+        const imgData=tmpCanvas.toDataURL('image/png');
+        // Cek apakah muat di halaman ini
+        if(yp+h+14>272){doc.addPage();yp=18;}
+        doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(30,70,50);
+        doc.text(titleStr,M,yp+5);yp+=8;
+        doc.setFillColor(248,252,249);doc.roundedRect(M,yp,CW,h,2,2,'F');
+        doc.addImage(imgData,'PNG',M+2,yp+2,CW-4,h-4);
+        yp+=h+6;
+      }catch(e){console.log('Chart error:',e);}
+    }
+
+    // ── RINGKASAN ──
+    secTitle('RINGKASAN KEUANGAN');
+    statBoxes([
+      {label:'Income',val:fmtRp(income),bg:[212,243,220],color:[30,100,50]},
+      {label:'Expense',val:fmtRp(expense),bg:[254,226,226],color:[180,40,40]},
+      {label:'Net',val:fmtRp(net),bg:net>=0?[212,243,220]:[254,226,226],color:net>=0?[30,100,50]:[180,40,40]},
+    ]);
+    checkPage();
+
+    // Saldo total
+    const allTx=data.transactions;
+    const allIncome=allTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const allExpense=allTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const allTransfer=allTx.filter(t=>t.type==='transfer').reduce((s,t)=>s+t.amount,0);
+    const saldo=(data.saldoAwal||0)+allIncome-allExpense-allTransfer;
+    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
+    doc.text(`Saldo kas saat ini (semua waktu): ${fmtRp(saldo)}`,M,yp);yp+=12;
+    checkPage();
+
+    // ── GRAFIK ──
+    secTitle('GRAFIK');
+    addChartImage('chartIvsE','Income vs Expense',62);
+    addChartImage('chartPie','Komposisi Expense',70);
+
+    // ── BREAKDOWN EXPENSE ──
+    secTitle('BREAKDOWN EXPENSE');
+    const expTx=txList.filter(t=>t.type==='expense');
+    const cat1Map={};
+    expTx.forEach(t=>{const c=t.cat1||'Misc';cat1Map[c]=(cat1Map[c]||0)+t.amount;});
+    Object.entries(cat1Map).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+      checkPage();
+      const pct=totalExp>0?Math.round((v/totalExp)*100):0;
+      const colorHex=CAT_COLORS[k]||'#94a3b8';
+      const r=parseInt(colorHex.slice(1,3),16);
+      const g=parseInt(colorHex.slice(3,5),16);
+      const b=parseInt(colorHex.slice(5,7),16);
+      progressRow(k,v,totalExp,[r,g,b]);
     });
-    yp+=24;
-  }
+    yp+=4;checkPage();
 
-  function checkPage(){if(yp>270){doc.addPage();yp=18;}}
+    // Cat2 breakdown
+    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(45,106,79);
+    doc.text('Per Kelompok (Cat 2):',M,yp);yp+=8;
+    const cat2Map={};
+    expTx.forEach(t=>{const c=t.cat2||t.cat1||'Misc';cat2Map[c]=(cat2Map[c]||0)+t.amount;});
+    Object.entries(cat2Map).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+      checkPage();
+      const colorHex=CAT_COLORS[k]||'#94a3b8';
+      const r=parseInt(colorHex.slice(1,3),16);
+      const g=parseInt(colorHex.slice(3,5),16);
+      const b=parseInt(colorHex.slice(5,7),16);
+      progressRow(k,v,totalExp,[r,g,b]);
+    });
+    yp+=4;checkPage();
 
-  // RINGKASAN
-  secTitle('RINGKASAN KEUANGAN');
-  statBoxes([
-    {label:'Income',val:fmtRp(income),bg:[212,243,220],color:[30,100,50]},
-    {label:'Expense',val:fmtRp(expense),bg:[254,226,226],color:[180,40,40]},
-    {label:'Net',val:fmtRp(net),bg:net>=0?[212,243,220]:[254,226,226],color:net>=0?[30,100,50]:[180,40,40]},
-  ]);
-  checkPage();
-
-  // SALDO
-  const allTx=data.transactions;
-  const allIncome=allTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const allExpense=allTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  const saldo=(data.saldoAwal||0)+allIncome-allExpense;
-  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(100);
-  doc.text(`Saldo saat ini (semua waktu): ${fmtRp(saldo)}`,14,yp);yp+=10;checkPage();
-
-  // BREAKDOWN EXPENSE
-  secTitle('BREAKDOWN EXPENSE');
-  const expTx=txList.filter(t=>t.type==='expense');
-  const cat1Map={};
-  expTx.forEach(t=>{const c=t.cat1||'Lain-lain';cat1Map[c]=(cat1Map[c]||0)+t.amount;});
-
-  Object.entries(cat1Map).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
-    checkPage();
-    const pct=totalExp>0?Math.round((v/totalExp)*100):0;
-    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(30,70,50);
-    doc.text(k,14,yp+4);
-    doc.setFont('helvetica','normal');doc.setTextColor(60,60,60);
-    doc.text(`${fmtRp(v)} (${pct}%)`,196,yp+4,{align:'right'});
-    doc.setFillColor(220,240,228);doc.roundedRect(14,yp+6,182,4,1,1,'F');
-    const colorHex=CAT_COLORS[k]||'#94a3b8';
-    const r=parseInt(colorHex.slice(1,3),16),g=parseInt(colorHex.slice(3,5),16),b=parseInt(colorHex.slice(5,7),16);
-    doc.setFillColor(r,g,b);if(pct>0)doc.roundedRect(14,yp+6,182*(pct/100),4,1,1,'F');
-    yp+=14;
-  });
-
-  yp+=4;checkPage();
-
-  // RIWAYAT TRANSAKSI
-  secTitle('RIWAYAT TRANSAKSI');
-  doc.setFillColor(45,106,79);doc.rect(14,yp,182,7,'F');
-  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-  doc.text('Tanggal',16,yp+5);doc.text('Deskripsi',48,yp+5);doc.text('Kategori',118,yp+5);doc.text('Jumlah',196,yp+5,{align:'right'});
-  yp+=9;
-
-  txList.slice(0,50).forEach((t,i)=>{
-    checkPage();
-    if(i%2===0){doc.setFillColor(245,250,247);doc.rect(14,yp-1,182,8,'F');}
-    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(50,50,50);
-    doc.text(t.date,16,yp+4);
-    const desc=(t.desc||'').substring(0,30);
-    doc.text(desc,48,yp+4);
-    const cat=t.type==='income'?(t.incomeType||'Income'):t.type==='expense'?(t.cat1||'Expense'):'Transfer';
-    doc.text(cat.substring(0,20),118,yp+4);
-    const sign=t.type==='income'?'+':t.type==='expense'?'-':'';
-    const amtColor=t.type==='income'?[30,100,50]:t.type==='expense'?[180,40,40]:[160,120,0];
-    doc.setTextColor(...amtColor);doc.setFont('helvetica','bold');
-    doc.text(sign+fmtRp(t.amount),196,yp+4,{align:'right'});
-    doc.setDrawColor(200,220,210);doc.line(14,yp+7,196,yp+7);
+    // ── RIWAYAT TRANSAKSI ──
+    secTitle('RIWAYAT TRANSAKSI');
+    doc.setFillColor(45,106,79);doc.rect(M,yp,CW,7,'F');
+    doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+    doc.text('Tanggal',M+2,yp+5);
+    doc.text('Deskripsi',M+34,yp+5);
+    doc.text('Kategori',M+110,yp+5);
+    doc.text('Jumlah',M+CW,yp+5,{align:'right'});
     yp+=9;
-  });
 
-  // Footer
-  const pageCount=doc.getNumberOfPages();
-  for(let i=1;i<=pageCount;i++){
-    doc.setPage(i);
-    doc.setFillColor(45,106,79);doc.rect(0,289,210,8,'F');
-    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(200,230,210);
-    doc.text(`Finance Tracker — ${periodeLabel} — Hal ${i}/${pageCount}`,105,294,{align:'center'});
-  }
+    txList.slice(0,50).forEach((t,i)=>{
+      checkPage();
+      if(i%2===0){doc.setFillColor(245,250,247);doc.rect(M,yp-1,CW,8,'F');}
+      doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(50,50,50);
+      doc.text(t.date,M+2,yp+4);
+      const desc=(t.desc||'').substring(0,35);
+      doc.text(desc,M+34,yp+4);
+      const cat=t.type==='income'?(t.incomeType||'Income'):t.type==='expense'?(t.cat1||'Expense'):'Transfer';
+      doc.text(cat.substring(0,18),M+110,yp+4);
+      const sign=t.type==='income'?'+':t.type==='expense'?'-':'';
+      const amtColor=t.type==='income'?[30,100,50]:t.type==='expense'?[180,40,40]:[160,120,0];
+      doc.setTextColor(...amtColor);doc.setFont('helvetica','bold');
+      doc.text(sign+fmtRp(t.amount),M+CW,yp+4,{align:'right'});
+      doc.setDrawColor(200,220,210);doc.line(M,yp+7,M+CW,yp+7);
+      yp+=9;
+    });
 
-  doc.save(`finance-${analisisPeriod==='bulanan'?MONTHS[m].toLowerCase()+'-'+y:y}.pdf`);
+    // Footer
+    const pageCount=doc.getNumberOfPages();
+    for(let i=1;i<=pageCount;i++){
+      doc.setPage(i);
+      doc.setFillColor(45,106,79);doc.rect(0,289,PW,8,'F');
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(200,230,210);
+      doc.text(`Finance Tracker — ${periodeLabel} — Hal ${i}/${pageCount}`,105,294,{align:'center'});
+    }
+
+    const fn=analisisPeriod==='bulanan'
+      ?`finance-${MONTHS[m].toLowerCase()}-${y}.pdf`
+      :analisisPeriod==='mingguan'
+      ?`finance-minggu-${toDateStr(getWeekStart(analisisDate))}.pdf`
+      :`finance-${y}.pdf`;
+    doc.save(fn);
+  }, 300);
 }
 
 renderDashboard();
